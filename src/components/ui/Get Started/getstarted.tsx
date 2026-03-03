@@ -1,3 +1,5 @@
+import { Link } from "react-router-dom";
+
 export default function GetStarted() {
     return (
         <section className="w-full py-2 px-6">
@@ -5,7 +7,7 @@ export default function GetStarted() {
                 <div className="relative overflow-hidden rounded-3xl border border-white/10 bg-[#0F0F0F] px-8 py-16 text-center">
 
                     {/* 🔥 Top Center Glow */}
-                    <div className="absolute -top-40 left-1/2 -translate-x-1/2 h-72 w-72 rounded-full bg-white/10 blur-2xl pointer-events-none" />
+                    <div className="absolute -top-40 left-1/2 -translate-x-1/2 h-72 w-72 rounded-full bg-gray-600/20 blur-3xl  pointer-events-none " />
 
                     {/* Heading */}
                     <h2 className="text-4xl md:text-5xl font-semibold text-white mb-6">
@@ -19,15 +21,18 @@ export default function GetStarted() {
                     </p>
 
                     {/* Button */}
-                    <button className="group relative inline-flex items-center gap-2 rounded-full px-8 py-4 text-lg font-medium text-black bg-white transition-all duration-300 hover:scale-105 hover:shadow-[0_0_30px_rgba(255,255,255,0.6)]">
+                    <Link
+                        to="/signup"
+                        className="group relative inline-flex items-center gap-2 rounded-full px-8 py-4 text-lg font-medium text-black bg-white transition-all duration-300 hover:scale-105 hover:shadow-[0_0_20px_rgba(255,255,255,0.6)]"
+                    >
                         Get Started Now
                         <span className="transition-transform duration-300 group-hover:translate-x-1">
                             →
                         </span>
-                    </button>
+                    </Link>
 
                 </div>
             </div>
         </section>
-    )
+    );
 }

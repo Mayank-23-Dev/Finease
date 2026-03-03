@@ -7,6 +7,7 @@ import { DisplayCardsDemo } from "../ui/Feature_Section/feature-section";
 import Budget from "@/components/ui/Feature_Section/budget";
 import { CircularTestimonialsDemo } from "@/components/ui/Testimonials/testomonials";
 import GetStarted from "@/components/ui/Get Started/getstarted";
+import { FaqsSection } from "@/components/ui/FAQS/faqs";
 
 export default function Page() {
   return (
@@ -39,7 +40,12 @@ export default function Page() {
           <GetStarted />
         </section>
 
-        {/* ABOUT */}
+        {/* FAQS*/}
+        <section id="FAQS" className="py-10">
+          <FaqsSection />
+        </section>
+
+        {/* ABOUT US*/}
         <section id="about" className="py-10">
           <Footer />
         </section>

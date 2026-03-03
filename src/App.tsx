@@ -1,10 +1,13 @@
 import Landing from "./components/Pages/Landing";
+import { AuthPage } from "@/components/ui/SignUp/auth-page";
 import { Particles } from "@/components/ui/background-particles";
+import { Routes, Route } from "react-router-dom";
 
 export default function App() {
   return (
     <div className="relative min-h-screen w-full bg-background text-foreground">
-      {/* Background Layer */}
+
+      {/* Background */}
       <div className="fixed inset-0 z-0">
         <Particles
           quantity={100}
@@ -15,9 +18,12 @@ export default function App() {
         />
       </div>
 
-      {/* Content Layer */}
+      {/* Pages */}
       <div>
-        <Landing />
+        <Routes>
+          <Route path="/" element={<Landing />} />
+          <Route path="/signup" element={<AuthPage />} />
+        </Routes>
       </div>
 
     </div>

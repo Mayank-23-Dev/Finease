@@ -1,6 +1,7 @@
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { ArrowRightIcon } from "lucide-react";
+import { Link } from "react-router-dom";
 
 export function HeroSection() {
 	return (
@@ -38,10 +39,11 @@ export function HeroSection() {
 
 				<div className="fade-in slide-in-from-bottom-10 flex w-fit animate-in items-center justify-center gap-3 fill-mode-backwards pt-2 delay-300 duration-500 ease-out">
 
-					<Button>
-						Get started{" "}
-						<ArrowRightIcon data-icon="inline-start" />
+					<Button asChild>
+						<Link to="/signup">Get started{" "}
+						<ArrowRightIcon data-icon="inline-start" /></Link>
 					</Button>
+					
 				</div>
 			</div>
 			<div className="relative">

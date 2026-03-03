@@ -4,6 +4,7 @@ import Logo from "@/components/ui/Navbar/logo";
 import { useScroll } from "@/components/hooks/use-scroll";
 import { Button } from "@/components/ui/button";
 import { MobileNav } from "@/components/ui/Navbar/mobile-nav";
+import { Link } from "react-router-dom";
 
 export const navLinks = [
 	{
@@ -15,7 +16,11 @@ export const navLinks = [
 		href: "#testimonials",
 	},
 	{
-		label: "About",
+		label: "FAQs",
+		href: "#FAQS",
+	},
+	{
+		label: "About Us",
 		href: "#about",
 	},
 ];
@@ -43,11 +48,8 @@ export function Header() {
 							<a href={link.href}>{link.label}</a>
 						</Button>
 					))}
-					<Button size="sm" variant="outline">
-						Sign In
-					</Button>
-					<Button size="sm">
-						Get Started
+					<Button asChild size="sm">
+						<Link to="/signup">Get Started</Link>
 					</Button>
 				</div>
 				<MobileNav />
