@@ -10,93 +10,134 @@ import {
   CardTitle,
 } from "@/components/ui/Dashboard_UI/card"
 
-export function SectionCards() {
+type SectionCardsProps = {
+  income: number
+  expense: number
+  balance: number
+}
+
+export function SectionCards({ income, expense, balance }: SectionCardsProps) {
+
+  const savingsRate =
+    income > 0 ? Math.round(((income - expense) / income) * 100) : 0
+
   return (
     <div className="grid grid-cols-1 gap-4 px-4 *:data-[slot=card]:bg-gradient-to-t *:data-[slot=card]:from-primary/5 *:data-[slot=card]:to-card *:data-[slot=card]:shadow-xs lg:px-6 @xl/main:grid-cols-2 @5xl/main:grid-cols-4 dark:*:data-[slot=card]:bg-card">
+
+      {/* BALANCE */}
       <Card className="@container/card">
         <CardHeader>
           <CardDescription>Total Balance</CardDescription>
           <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">
-            ₹1,25,749.00
+            ₹{balance.toLocaleString()}
           </CardTitle>
+
           <CardAction>
             <Badge variant="outline">
               <IconTrendingUp />
-              +2.5%
+              Live
             </Badge>
           </CardAction>
+
         </CardHeader>
+
         <CardFooter className="flex-col items-start gap-1.5 text-sm">
           <div className="line-clamp-1 flex gap-2 font-medium">
-            +₹4,200 this month <IconTrendingUp className="size-4" />
+            Current available balance
           </div>
           <div className="text-muted-foreground">
             Across all linked accounts
           </div>
         </CardFooter>
       </Card>
+
+      {/* EXPENSE */}
       <Card className="@container/card">
         <CardHeader>
-          <CardDescription>Monthly Spending</CardDescription>
+          <CardDescription>Total Expenses</CardDescription>
+
           <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">
-            ₹32,450
+            ₹{expense.toLocaleString()}
           </CardTitle>
+
           <CardAction>
             <Badge variant="outline">
               <IconTrendingDown />
-              -12%
+              Debit
             </Badge>
           </CardAction>
+
         </CardHeader>
+
         <CardFooter className="flex-col items-start gap-1.5 text-sm">
           <div className="line-clamp-1 flex gap-2 font-medium">
-            -12% vs last month <IconTrendingDown className="size-4" />
+            Spending across transactions
           </div>
+
           <div className="text-muted-foreground">
-            Expenses in the last 30 days
+            Calculated from debit payments
           </div>
         </CardFooter>
       </Card>
+
+      {/* INCOME */}
+      <Card className="@container/card">
+        <CardHeader>
+          <CardDescription>Total Income</CardDescription>
+
+          <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">
+            ₹{income.toLocaleString()}
+          </CardTitle>
+
+          <CardAction>
+            <Badge variant="outline">
+              <IconTrendingUp />
+              Credit
+            </Badge>
+          </CardAction>
+
+        </CardHeader>
+
+        <CardFooter className="flex-col items-start gap-1.5 text-sm">
+          <div className="line-clamp-1 flex gap-2 font-medium">
+            Money received
+          </div>
+
+          <div className="text-muted-foreground">
+            From salary, transfers and income
+          </div>
+        </CardFooter>
+      </Card>
+
+      {/* SAVINGS RATE */}
       <Card className="@container/card">
         <CardHeader>
           <CardDescription>Savings Rate</CardDescription>
+
           <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">
-            38%
+            {savingsRate}%
           </CardTitle>
+
           <CardAction>
             <Badge variant="outline">
               <IconTrendingUp />
-              +5%
+              Saving
             </Badge>
           </CardAction>
+
         </CardHeader>
+
         <CardFooter className="flex-col items-start gap-1.5 text-sm">
           <div className="line-clamp-1 flex gap-2 font-medium">
-            +5% improvement <IconTrendingUp className="size-4" />
+            Percentage of income saved
           </div>
-          <div className="text-muted-foreground">Income saved this month</div>
+
+          <div className="text-muted-foreground">
+            Calculated automatically
+          </div>
         </CardFooter>
       </Card>
-      <Card className="@container/card">
-        <CardHeader>
-          <CardDescription>Budget Usage</CardDescription>
-          <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">
-            72%
-          </CardTitle>
-          <CardAction>
-            <Badge variant="outline">
-              <IconTrendingUp />
-              +4.5%
-            </Badge>
-          </CardAction>
-        </CardHeader>
-        <CardFooter className="flex-col items-start gap-1.5 text-sm">
-          <div className="line-clamp-1 flex gap-2 font-medium">
-            ₹8,500 remaining <IconTrendingUp className="size-4" />
-          </div>
-          <div className="text-muted-foreground">Of monthly budget used</div>
-        </CardFooter>
-      </Card>
+
     </div>
   )
 }
