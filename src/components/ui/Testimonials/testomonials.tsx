@@ -1,4 +1,3 @@
-import React from "react";
 import { Globe } from "lucide-react"
 import { CircularTestimonials } from "@/components/ui/Testimonials/Circular-testimonials";
 

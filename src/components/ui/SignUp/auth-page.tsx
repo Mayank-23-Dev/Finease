@@ -2,8 +2,20 @@ import Logo from "@/components/ui/Navbar/logo";
 import { Button } from "@/components/ui/SignUp/button";
 import { ChevronLeft, Github } from "lucide-react";
 import { Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 
 export function AuthPage() {
+const navigate = useNavigate();
+
+const handleGoogleLogin = () => {
+// Later you can add real Google OAuth here
+navigate("/dashboard");
+};
+
+const handleGithubLogin = () => {
+// Later you can add real GitHub OAuth here
+navigate("/dashboard");
+};
 	return (
 		<div className="relative w-full min-h-screen flex items-center justify-center px-8">
 
@@ -29,12 +41,20 @@ export function AuthPage() {
 				</div>
 
 				<div className="space-y-3">
-					<Button className="w-full" type="button">
+					<Button
+						className="w-full cursor-pointer hover:bg-gray-500/10 hover:text-white"
+						type="button"
+						onClick={handleGoogleLogin}
+						>
 						<GoogleIcon className="mr-2 h-4 w-4" />
 						Continue with Google
 					</Button>
 
-					<Button className="w-full" type="button">
+					<Button
+						className="w-full cursor-pointer hover:bg-gray-500/10 hover:text-white"
+						type="button"
+						onClick={handleGithubLogin}
+						>
 						<Github className="mr-2 h-4 w-4" />
 						Continue with GitHub
 					</Button>

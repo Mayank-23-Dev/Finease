@@ -2,6 +2,8 @@ import Landing from "./components/Pages/Landing";
 import { AuthPage } from "@/components/ui/SignUp/auth-page";
 import { Particles } from "@/components/ui/background-particles";
 import { Routes, Route } from "react-router-dom";
+import { NotFound } from "@/components/ui/Page_Not_Found/not-found-2";
+import DashboardPage from "@/components/Pages/Dashboard";
 
 export default function App() {
   return (
@@ -23,6 +25,8 @@ export default function App() {
         <Routes>
           <Route path="/" element={<Landing />} />
           <Route path="/signup" element={<AuthPage />} />
+          <Route path="*" element={<NotFound />} />
+          <Route path="/dashboard" element={<DashboardPage />} />
         </Routes>
       </div>
 
