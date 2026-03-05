@@ -2,11 +2,12 @@ import { useState } from "react"
 import Logo from "@/components/ui/Navbar/logo"
 import { Button } from "@/components/ui/SignUp/button"
 import { ChevronLeft } from "lucide-react"
-import { Link } from "react-router-dom"
-
+import { Link, useNavigate } from "react-router-dom"
 import { signUp, signInWithGoogle } from "@/firebase/auth"
 
 export function AuthPage() {
+  const navigate = useNavigate()
+
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [confirmPassword, setConfirmPassword] = useState("")
@@ -25,7 +26,7 @@ export function AuthPage() {
     setMessage("")
 
     try {
-      const user = await signUp(email, password)
+      await signUp(email, password)
 
       setMessage(
         "Verification email sent. Please check your Inbox / Spam folder before logging in."
@@ -35,13 +36,20 @@ export function AuthPage() {
       setPassword("")
       setConfirmPassword("")
     } catch (error: any) {
+
       if (error.code === "auth/email-already-in-use") {
-        setError("An account with this email already exists.")
-      } else if (error.code === "auth/invalid-email") {
+        setError("email-exists")
+      }
+
+      else if (error.code === "auth/invalid-email") {
         setError("Please enter a valid email address.")
-      } else if (error.code === "auth/weak-password") {
+      }
+
+      else if (error.code === "auth/weak-password") {
         setError("Password must be at least 6 characters.")
-      } else {
+      }
+
+      else {
         setError("Something went wrong. Please try again.")
       }
     }
@@ -50,6 +58,7 @@ export function AuthPage() {
   const handleGoogleLogin = async () => {
     try {
       await signInWithGoogle()
+      navigate("/dashboard")
     } catch {
       setError("Google login failed. Please try again.")
     }
@@ -57,7 +66,7 @@ export function AuthPage() {
 
   return (
     <div className="relative w-full min-h-screen flex items-center justify-center px-8">
-      
+
       {/* Back Button */}
       <Button asChild className="absolute top-6 left-6" variant="ghost">
         <Link to="/">
@@ -66,7 +75,6 @@ export function AuthPage() {
         </Link>
       </Button>
 
-      {/* Auth Card */}
       <div className="w-full max-w-sm space-y-6">
         <Logo className="h-6" />
 
@@ -103,14 +111,28 @@ export function AuthPage() {
             type="password"
             placeholder="Confirm Password"
             required
-            className={`w-full rounded-md border px-3 py-2 text-sm bg-transparent ${
-              error ? "border-red-500" : ""
-            }`}
+            className={`w-full rounded-md border px-3 py-2 text-sm bg-transparent ${error ? "border-red-500" : ""
+              }`}
             value={confirmPassword}
             onChange={(e) => setConfirmPassword(e.target.value)}
           />
 
-          {error && (
+          {/* Email Exists Error */}
+          {error === "email-exists" && (
+            <p className="text-red-400 text-xs">
+              An account with this email already exists. Click here to {" "}
+              <button
+                type="button"
+                className="font-bold underline hover:text-white cursor-pointer"
+                onClick={() => navigate(`/login?email=${email}`)}
+              >
+                Login
+              </button>
+            </p>
+          )}
+
+          {/* Other Errors */}
+          {error && error !== "email-exists" && (
             <p className="text-red-400 text-xs">{error}</p>
           )}
 
@@ -118,7 +140,10 @@ export function AuthPage() {
             <p className="text-green-400 text-xs">{message}</p>
           )}
 
-          <Button type="submit" className="w-full cursor-pointer hover:bg-gray-500/10 hover:text-white">
+          <Button
+            type="submit"
+            className="w-full cursor-pointer hover:bg-gray-500/10 hover:text-white"
+          >
             Create Account
           </Button>
         </form>
@@ -137,16 +162,14 @@ export function AuthPage() {
           <GoogleIcon className="mr-2 h-4 w-4" />
           Continue with Google
         </Button>
-
-        <p className="text-muted-foreground text-xs">
-          By clicking continue, you agree to our{" "}
-          <a className="underline underline-offset-4 hover:text-primary">
-            Terms of Service
-          </a>{" "}
-          and{" "}
-          <a className="underline underline-offset-4 hover:text-primary">
-            Privacy Policy
-          </a>.
+        <p className="text-muted-foreground text-xs text-center">
+          Already have an account?{" "}
+          <Link
+            to="/login"
+            className="underline underline-offset-4 hover:text-primary cursor-pointer"
+          >
+            Login
+          </Link>
         </p>
       </div>
     </div>

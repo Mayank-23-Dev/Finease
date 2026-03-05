@@ -1,8 +1,8 @@
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import Logo from "@/components/ui/Navbar/logo"
 import { Button } from "@/components/ui/SignUp/button"
 import { ChevronLeft } from "lucide-react"
-import { Link, useNavigate } from "react-router-dom"
+import { Link, useNavigate, useSearchParams } from "react-router-dom"
 
 import { signInWithEmailAndPassword } from "firebase/auth"
 import { auth } from "@/firebase/firebase"
@@ -10,10 +10,19 @@ import { signInWithGoogle } from "@/firebase/auth"
 
 export function LoginPage() {
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
 
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [error, setError] = useState("")
+
+  // Autofill email from signup page
+  useEffect(() => {
+    const emailFromURL = searchParams.get("email")
+    if (emailFromURL) {
+      setEmail(emailFromURL)
+    }
+  }, [searchParams])
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -29,19 +38,24 @@ export function LoginPage() {
 
       const user = userCredential.user
 
-      // Block login if email not verified
       if (!user.emailVerified) {
         setError("Please verify your email before logging in.")
         return
       }
 
       navigate("/dashboard")
+
     } catch (error: any) {
+
       if (error.code === "auth/user-not-found") {
         setError("No account found with this email.")
-      } else if (error.code === "auth/wrong-password") {
+      }
+
+      else if (error.code === "auth/wrong-password") {
         setError("Incorrect password.")
-      } else {
+      }
+
+      else {
         setError("Login failed. Please try again.")
       }
     }
@@ -59,7 +73,6 @@ export function LoginPage() {
   return (
     <div className="relative w-full min-h-screen flex items-center justify-center px-8">
 
-      {/* Back Button */}
       <Button asChild className="absolute top-6 left-6" variant="ghost">
         <Link to="/">
           <ChevronLeft className="mr-2 h-4 w-4" />
@@ -67,7 +80,6 @@ export function LoginPage() {
         </Link>
       </Button>
 
-      {/* Card */}
       <div className="w-full max-w-sm space-y-6">
 
         <Logo className="h-6" />
@@ -105,10 +117,13 @@ export function LoginPage() {
             <p className="text-red-400 text-xs">{error}</p>
           )}
 
-          <Button className="w-full cursor-pointer !hover:bg-gray-500/10 !hover:text-white"
-            type="submit">
+          <Button
+            className="w-full cursor-pointer hover:bg-gray-500/10 hover:text-white"
+            type="submit"
+          >
             Login
           </Button>
+
         </form>
 
         <div className="flex items-center gap-3">
@@ -130,7 +145,7 @@ export function LoginPage() {
           Don't have an account?{" "}
           <Link
             to="/signup"
-            className="underline underline-offset-4 hover:text-primary"
+            className="underline underline-offset-4 hover:text-primary cursor-pointer"
           >
             Sign up
           </Link>
