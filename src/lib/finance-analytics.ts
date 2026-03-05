@@ -1,11 +1,12 @@
+import type { Transaction } from "@/components/hooks/use-transactions"
+
 export type ChartData = {
   month: string
   income: number
   expense: number
 }
 
-export function calculateBalance(data: any[]) {
-
+export function calculateBalance(data: Transaction[]) {
   const income = data
     .filter((t) => t.type === "Credit")
     .reduce((sum, t) => sum + t.amount, 0)
@@ -21,13 +22,13 @@ export function calculateBalance(data: any[]) {
   }
 }
 
-export function getMonthlyAnalytics(data: any[]): ChartData[] {
-
+export function getMonthlyAnalytics(data: Transaction[]): ChartData[] {
   const months: Record<string, ChartData> = {}
 
   data.forEach((t) => {
+    const date = new Date(t.date)
 
-    const month = new Date(t.date).toLocaleString("default", {
+    const month = date.toLocaleString("default", {
       month: "short",
     })
 
@@ -44,15 +45,9 @@ export function getMonthlyAnalytics(data: any[]): ChartData[] {
     } else {
       months[month].expense += t.amount
     }
-
   })
 
   return Object.values(months)
-}
-export type DailyChartData = {
-  date: string
-  income: number
-  expense: number
 }
 
 export type BalancePoint = {
@@ -60,7 +55,9 @@ export type BalancePoint = {
   balance: number
 }
 
-export function getRunningBalance(data: any[]) {
+export function getRunningBalance(data: Transaction[]): BalancePoint[] {
+  if (!data.length) return []
+
   const sorted = [...data].sort(
     (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
   )
@@ -79,7 +76,7 @@ export function getRunningBalance(data: any[]) {
   const start = new Date(sorted[0].date)
   const end = new Date(sorted[sorted.length - 1].date)
 
-  const result = []
+  const result: BalancePoint[] = []
   let runningBalance = 0
 
   for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {

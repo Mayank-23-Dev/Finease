@@ -48,7 +48,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       },
       {
         title: "Transaction",
-        url: "/dashboard/transaction",
+        url: "/dashboard/transactions",
         icon: IconWallet,
       },
       {

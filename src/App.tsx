@@ -9,6 +9,7 @@ import VerifyEmail from "@/components/ui/SignUp/verifyEmail";
 import { LoginPage } from "@/components/ui/SignUp/Login-page";
 import SettingsPage from "@/components/Pages/Settings";
 import DashboardHome from "@/components/Pages/DashboardHome";
+import TransactionsPage from "@/components/Pages/TransactionsPage";
 
 export default function App() {
   return (
@@ -44,6 +45,7 @@ export default function App() {
           >
             <Route index element={<DashboardHome />} />
             <Route path="settings" element={<SettingsPage />} />
+            <Route path="transactions" element={<TransactionsPage />} />
           </Route>
 
           <Route path="*" element={<NotFound />} />
