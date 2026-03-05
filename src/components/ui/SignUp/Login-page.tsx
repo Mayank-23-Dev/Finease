@@ -2,47 +2,47 @@ import { useState } from "react"
 import Logo from "@/components/ui/Navbar/logo"
 import { Button } from "@/components/ui/SignUp/button"
 import { ChevronLeft } from "lucide-react"
-import { Link } from "react-router-dom"
+import { Link, useNavigate } from "react-router-dom"
 
-import { signUp, signInWithGoogle } from "@/firebase/auth"
+import { signInWithEmailAndPassword } from "firebase/auth"
+import { auth } from "@/firebase/firebase"
+import { signInWithGoogle } from "@/firebase/auth"
 
-export function AuthPage() {
+export function LoginPage() {
+  const navigate = useNavigate()
+
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
-  const [confirmPassword, setConfirmPassword] = useState("")
   const [error, setError] = useState("")
-  const [message, setMessage] = useState("")
 
-  const handleSignup = async (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
 
-    if (password !== confirmPassword) {
-      setError("Passwords do not match")
-      return
-    }
-
     setError("")
-    setMessage("")
 
     try {
-      const user = await signUp(email, password)
-
-      setMessage(
-        "Verification email sent. Please check your Inbox / Spam folder before logging in."
+      const userCredential = await signInWithEmailAndPassword(
+        auth,
+        email,
+        password
       )
 
-      setEmail("")
-      setPassword("")
-      setConfirmPassword("")
+      const user = userCredential.user
+
+      // Block login if email not verified
+      if (!user.emailVerified) {
+        setError("Please verify your email before logging in.")
+        return
+      }
+
+      navigate("/dashboard")
     } catch (error: any) {
-      if (error.code === "auth/email-already-in-use") {
-        setError("An account with this email already exists.")
-      } else if (error.code === "auth/invalid-email") {
-        setError("Please enter a valid email address.")
-      } else if (error.code === "auth/weak-password") {
-        setError("Password must be at least 6 characters.")
+      if (error.code === "auth/user-not-found") {
+        setError("No account found with this email.")
+      } else if (error.code === "auth/wrong-password") {
+        setError("Incorrect password.")
       } else {
-        setError("Something went wrong. Please try again.")
+        setError("Login failed. Please try again.")
       }
     }
   }
@@ -50,14 +50,15 @@ export function AuthPage() {
   const handleGoogleLogin = async () => {
     try {
       await signInWithGoogle()
+      navigate("/dashboard")
     } catch {
-      setError("Google login failed. Please try again.")
+      setError("Google login failed.")
     }
   }
 
   return (
     <div className="relative w-full min-h-screen flex items-center justify-center px-8">
-      
+
       {/* Back Button */}
       <Button asChild className="absolute top-6 left-6" variant="ghost">
         <Link to="/">
@@ -66,20 +67,21 @@ export function AuthPage() {
         </Link>
       </Button>
 
-      {/* Auth Card */}
+      {/* Card */}
       <div className="w-full max-w-sm space-y-6">
+
         <Logo className="h-6" />
 
         <div className="space-y-1">
           <h1 className="text-2xl font-bold tracking-wide">
-            Sign In or Join Now!
+            Welcome Back
           </h1>
           <p className="text-muted-foreground text-sm">
-            Login or create your account.
+            Login to your FinEase account
           </p>
         </div>
 
-        <form onSubmit={handleSignup} className="space-y-3">
+        <form onSubmit={handleLogin} className="space-y-3">
 
           <input
             type="email"
@@ -99,27 +101,13 @@ export function AuthPage() {
             onChange={(e) => setPassword(e.target.value)}
           />
 
-          <input
-            type="password"
-            placeholder="Confirm Password"
-            required
-            className={`w-full rounded-md border px-3 py-2 text-sm bg-transparent ${
-              error ? "border-red-500" : ""
-            }`}
-            value={confirmPassword}
-            onChange={(e) => setConfirmPassword(e.target.value)}
-          />
-
           {error && (
             <p className="text-red-400 text-xs">{error}</p>
           )}
 
-          {message && (
-            <p className="text-green-400 text-xs">{message}</p>
-          )}
-
-          <Button type="submit" className="w-full cursor-pointer hover:bg-gray-500/10 hover:text-white">
-            Create Account
+          <Button className="w-full cursor-pointer !hover:bg-gray-500/10 !hover:text-white"
+            type="submit">
+            Login
           </Button>
         </form>
 
@@ -138,16 +126,16 @@ export function AuthPage() {
           Continue with Google
         </Button>
 
-        <p className="text-muted-foreground text-xs">
-          By clicking continue, you agree to our{" "}
-          <a className="underline underline-offset-4 hover:text-primary">
-            Terms of Service
-          </a>{" "}
-          and{" "}
-          <a className="underline underline-offset-4 hover:text-primary">
-            Privacy Policy
-          </a>.
+        <p className="text-muted-foreground text-xs text-center">
+          Don't have an account?{" "}
+          <Link
+            to="/signup"
+            className="underline underline-offset-4 hover:text-primary"
+          >
+            Sign up
+          </Link>
         </p>
+
       </div>
     </div>
   )

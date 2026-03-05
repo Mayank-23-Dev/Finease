@@ -3,7 +3,12 @@ import { AuthPage } from "@/components/ui/SignUp/auth-page";
 import { Particles } from "@/components/ui/background-particles";
 import { Routes, Route } from "react-router-dom";
 import { NotFound } from "@/components/ui/Page_Not_Found/not-found-2";
-import DashboardPage from "@/components/Pages/Dashboard";
+import DashboardPage from "@/components/Pages/DashboardPage";
+import ProtectedRoute from "@/routes/ProtectedRoute";
+import VerifyEmail from "@/components/ui/SignUp/verifyEmail";
+import { LoginPage } from "@/components/ui/SignUp/Login-page";
+import SettingsPage from "@/components/Pages/Settings";
+import DashboardHome from "@/components/Pages/DashboardHome";
 
 export default function App() {
   return (
@@ -20,13 +25,29 @@ export default function App() {
         />
       </div>
 
-      {/* Pages */}
       <div>
         <Routes>
+
           <Route path="/" element={<Landing />} />
+          <Route path="/login" element={<LoginPage />} />
           <Route path="/signup" element={<AuthPage />} />
+          <Route path="/verify" element={<VerifyEmail />} />
+
+          {/* Dashboard Layout */}
+          <Route
+            path="/dashboard"
+            element={
+              <ProtectedRoute>
+                <DashboardPage />
+              </ProtectedRoute>
+            }
+          >
+            <Route index element={<DashboardHome />} />
+            <Route path="settings" element={<SettingsPage />} />
+          </Route>
+
           <Route path="*" element={<NotFound />} />
-          <Route path="/dashboard" element={<DashboardPage />} />
+
         </Routes>
       </div>
 

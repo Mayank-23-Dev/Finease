@@ -51,5 +51,7 @@
 { "id": 47, "transaction": "Car Service", "category": "Transport", "type": "Debit", "amount": 3500, "date": "2024-07-06", "method": "Debit Card", "status": "Completed" },
 { "id": 48, "transaction": "Transfer from Savings", "category": "Transfer", "type": "Credit", "amount": 5000, "date": "2024-07-06", "method": "Bank Transfer", "status": "Completed" },
 { "id": 49, "transaction": "Gaming Subscription", "category": "Subscription", "type": "Debit", "amount": 499, "date": "2024-07-07", "method": "Credit Card", "status": "Completed" },
-{ "id": 50, "transaction": "Weekend Shopping", "category": "Shopping", "type": "Debit", "amount": 2800, "date": "2024-07-07", "method": "Debit Card", "status": "Completed" }
+{ "id": 50, "transaction": "Weekend Shopping", "category": "Shopping", "type": "Debit", "amount": 2800, "date": "2024-07-07", "method": "Debit Card", "status": "Completed" },
+{ "id": 51, "transaction": "Xhasmter", "category": "Credits", "type": "Debit", "amount": 28000, "date": "2024-07-08", "method": "Debit Card", "status": "Completed" },
+{ "id": 52, "transaction": "Salary", "category": "Income", "type": "Credit", "amount": 50000, "date": "2024-07-06", "method": "Bank Transfer", "status": "Completed" }
 ]

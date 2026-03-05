@@ -2,7 +2,7 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { ArrowRightIcon } from "lucide-react";
 import { Link } from "react-router-dom";
-
+import Finease_Dashboard from "@/assets/Finease_Dashboard.png"
 export function HeroSection() {
 	return (
 		<section className="mx-auto w-full max-w-5xl overflow-hidden pt-16">
@@ -64,16 +64,16 @@ export function HeroSection() {
 						<img
 							alt="app screen"
 							className="z-2 aspect-video rounded-lg border dark:hidden"
-							height="1080"
-							src="https://storage.efferd.com/screen/dashboard-light.webp"
-							width="1920"
+							height="858"
+							src={Finease_Dashboard}
+							width="1895"
 						/>
 						<img
 							alt="app screen"
 							className="hidden aspect-video rounded-lg bg-background dark:block"
-							height="1080"
-							src="https://storage.efferd.com/screen/dashboard-dark.webp"
-							width="1920"
+							height="858"
+							src={Finease_Dashboard}
+							width="1895"
 						/>
 					</div>
 				</div>

@@ -5,6 +5,7 @@ import { useScroll } from "@/components/hooks/use-scroll";
 import { Button } from "@/components/ui/button";
 import { MobileNav } from "@/components/ui/Navbar/mobile-nav";
 import { Link } from "react-router-dom";
+import { User } from "lucide-react";
 
 export const navLinks = [
 	{
@@ -48,6 +49,13 @@ export function Header() {
 							<a href={link.href}>{link.label}</a>
 						</Button>
 					))}
+					{/* Login Button */}
+					<Button asChild size="sm" variant="ghost">
+						<Link to="/login" className="flex items-center gap-1">
+							<User size={16} />
+							Login
+						</Link>
+					</Button>
 					<Button asChild size="sm">
 						<Link to="/signup">Get Started</Link>
 					</Button>

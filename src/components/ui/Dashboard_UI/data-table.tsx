@@ -152,15 +152,17 @@ const columns: ColumnDef<z.infer<typeof schema>>[] = [
     accessorKey: "category",
     header: "Category",
     cell: ({ row }) => (
-      <Badge variant="outline">{row.original.category}</Badge>
+      <div className="inline-flex">
+        <Badge variant="outline">{row.original.category}</Badge>
+      </div>
     ),
   },
 
   {
     accessorKey: "amount",
-    header: () => <div className="text-right">Amount</div>,
+    header: () => <div className="text-right w-[120px]">Amount</div>,
     cell: ({ row }) => (
-      <div className="text-right font-medium">
+      <div className="text-right w-[120px] font-medium">
         ₹{row.original.amount.toLocaleString()}
       </div>
     ),
@@ -168,17 +170,30 @@ const columns: ColumnDef<z.infer<typeof schema>>[] = [
 
   {
     accessorKey: "date",
-    header: "Date",
+    header: () => <div className="pl-6">Date</div>,
+    cell: ({ row }) => (
+      <div className="pl-6">{row.original.date}</div>
+    ),
   },
 
   {
     accessorKey: "type",
     header: "Type",
-    cell: ({ row }) => (
-      <Badge variant="outline">
-        {row.original.type === "Credit" ? "Credit" : "Debit"}
-      </Badge>
-    ),
+    cell: ({ row }) => {
+      const type = row.original.type
+
+      return (
+        <Badge
+          className={
+            type === "Debit"
+              ? "bg-red-500/10 text-red-400 border-red-500/20"
+              : "bg-green-500/10 text-green-400 border-green-500/20"
+          }
+        >
+          {type}
+        </Badge>
+      )
+    },
   },
 
   {
