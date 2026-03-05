@@ -1,5 +1,5 @@
 import { Navigate } from "react-router-dom"
-import { useAuth } from "@/components/hooks/useAuth"
+import { useAuth } from "@/components/hooks/use-auth"
 import { MorphingSquare } from "@/routes/morphingsquare"
 
 export default function ProtectedRoute({

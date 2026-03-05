@@ -1,4 +1,4 @@
-import { auth } from "./firebase";
+import { auth } from "./firebase"
 
 import {
   createUserWithEmailAndPassword,
@@ -6,30 +6,77 @@ import {
   GoogleAuthProvider,
   signOut,
   sendEmailVerification,
-} from "firebase/auth";
+  updateProfile,
+  updatePassword,
+  deleteUser,
+} from "firebase/auth"
 
-// Email signup + send verification email
+
+// Email signup
 export const signUp = async (email: string, password: string) => {
+
   const userCredential = await createUserWithEmailAndPassword(
     auth,
     email,
     password
-  );
+  )
 
-  // Send verification link
-  await sendEmailVerification(userCredential.user);
+  await sendEmailVerification(userCredential.user)
 
-  return userCredential.user;
-};
+  return userCredential.user
+}
+
 
 // Google login
 export const signInWithGoogle = () => {
-  const provider = new GoogleAuthProvider();
-  provider.setCustomParameters({ prompt: "select_account" });
-  return signInWithPopup(auth, provider);
-};
+
+  const provider = new GoogleAuthProvider()
+
+  provider.setCustomParameters({
+    prompt: "select_account"
+  })
+
+  return signInWithPopup(auth, provider)
+
+}
+
 
 // Logout
 export const logout = () => {
-  return signOut(auth);
-};
+  return signOut(auth)
+}
+
+
+// Update user name
+export const updateUserName = async (name: string) => {
+
+  const user = auth.currentUser
+  if (!user) throw new Error("User not logged in")
+
+  await updateProfile(user, {
+    displayName: name
+  })
+
+}
+
+
+// Change password
+export const changePassword = async (newPassword: string) => {
+
+  const user = auth.currentUser
+  if (!user) throw new Error("User not logged in")
+
+  await updatePassword(user, newPassword)
+
+}
+
+
+// Delete account
+export const deleteAccount = async () => {
+
+  const user = auth.currentUser
+  if (!user) throw new Error("User not logged in")
+
+  await deleteUser(user)
+
+}

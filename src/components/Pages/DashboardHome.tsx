@@ -13,7 +13,6 @@ export default function DashboardHome() {
 
   return (
     <div className="@container/main flex flex-1 flex-col gap-2">
-
       <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-6">
 
         <SectionCards
@@ -26,10 +25,10 @@ export default function DashboardHome() {
           <ChartAreaInteractive data={balanceData} />
         </div>
 
-        <DataTable data={data} />
+        {/* Show only last 10 transactions with a "View all" link */}
+        <DataTable data={data} limit={10} showViewAll={true} />
 
       </div>
-
     </div>
   )
 }

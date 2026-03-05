@@ -24,7 +24,7 @@ import {
   SidebarMenuItem,
 } from "@/components/ui/Dashboard_UI/sidebar"
 
-import { useAuth } from "@/components/hooks/useAuth"
+import { useAuth } from "@/components/hooks/use-auth"
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const { user } = useAuth()
