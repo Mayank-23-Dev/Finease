@@ -1,10 +1,10 @@
+// src/components/ui/Transaction_UI/add-transaction-dialog.tsx
 "use client"
 
 import * as React from "react"
 import { format } from "date-fns"
 import { ChevronDownIcon } from "lucide-react"
 import { IconPlus } from "@tabler/icons-react"
-import { z } from "zod"
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -32,37 +32,39 @@ import {
   SelectValue,
 } from "@/components/ui/Dashboard_UI/select"
 
-import { schema } from "@/components/ui/Transaction_UI/data-table"
+import type { Transaction } from "@/components/hooks/use-transactions"
 
-type Transaction = z.infer<typeof schema>
+// What the parent (TransactionsPage) passes in — no id/firebase_uid/created_at
+type TransactionInput = Omit<Transaction, "id" | "firebase_uid" | "created_at">
 
 interface AddTransactionDialogProps {
-  onAdd: (transaction: Transaction) => void
+  onAdd: (transaction: TransactionInput) => Promise<void>
 }
 
 const CATEGORIES = [
   "Income", "Subscription", "Food", "Shopping",
-  "Utilities", "Transport", "Health", "Entertainment", "Other"
+  "Utilities", "Transport", "Health", "Entertainment", "Other",
 ]
 const METHODS = [
   "Bank Transfer", "Credit Card", "Debit Card",
-  "UPI", "Cash", "Net Banking"
+  "UPI", "Cash", "Net Banking",
 ]
 
 const emptyForm = {
   transaction: "",
-  category: "",
-  amount: "",
-  date: undefined as Date | undefined,
-  type: "",
-  method: "",
-  status: "Completed",
+  category:    "",
+  amount:      "",
+  date:        undefined as Date | undefined,
+  type:        "",
+  method:      "",
+  status:      "Completed",
 }
 
 export function AddTransactionDialog({ onAdd }: AddTransactionDialogProps) {
-  const [open, setOpen] = React.useState(false)
-  const [form, setForm] = React.useState(emptyForm)
-  const [errors, setErrors] = React.useState<Record<string, string>>({})
+  const [open,    setOpen]    = React.useState(false)
+  const [form,    setForm]    = React.useState(emptyForm)
+  const [errors,  setErrors]  = React.useState<Record<string, string>>({})
+  const [saving,  setSaving]  = React.useState(false)
 
   const update = (key: keyof typeof emptyForm, value: string | Date | undefined) => {
     setForm((prev) => ({ ...prev, [key]: value }))
@@ -71,37 +73,43 @@ export function AddTransactionDialog({ onAdd }: AddTransactionDialogProps) {
 
   const validate = () => {
     const e: Record<string, string> = {}
-    if (!form.transaction.trim()) e.transaction = "Required"
-    if (!form.category) e.category = "Required"
+    if (!form.transaction.trim())                                  e.transaction = "Required"
+    if (!form.category)                                            e.category    = "Required"
     if (!form.amount || isNaN(Number(form.amount)) || Number(form.amount) <= 0)
-      e.amount = "Enter a valid amount"
-    if (!form.date) e.date = "Required"
-    if (!form.type) e.type = "Required"
-    if (!form.method) e.method = "Required"
+                                                                   e.amount      = "Enter a valid amount"
+    if (!form.date)                                                e.date        = "Required"
+    if (!form.type)                                                e.type        = "Required"
+    if (!form.method)                                              e.method      = "Required"
     return e
   }
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     const newErrors = validate()
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors)
       return
     }
 
-    onAdd({
-      id: Date.now(),
-      transaction: form.transaction.trim(),
-      category: form.category,
-      amount: Number(form.amount),
-      date: format(form.date!, "yyyy-MM-dd"),
-      type: form.type,
-      method: form.method,
-      status: form.status,
-    })
-
-    setForm(emptyForm)
-    setErrors({})
-    setOpen(false)
+    setSaving(true)
+    try {
+      await onAdd({
+        // ✅ No id here — Supabase generates UUID automatically
+        transaction: form.transaction.trim(),
+        category:    form.category,
+        amount:      Number(form.amount),
+        date:        format(form.date!, "yyyy-MM-dd"),
+        type:        form.type,
+        method:      form.method,
+        status:      form.status,
+      })
+      setForm(emptyForm)
+      setErrors({})
+      setOpen(false)
+    } catch (err) {
+      console.error("Failed to add transaction:", err)
+    } finally {
+      setSaving(false)
+    }
   }
 
   const handleOpenChange = (val: boolean) => {
@@ -140,9 +148,7 @@ export function AddTransactionDialog({ onAdd }: AddTransactionDialogProps) {
               value={form.transaction}
               onChange={(e) => update("transaction", e.target.value)}
             />
-            {errors.transaction && (
-              <p className="text-xs text-red-400">{errors.transaction}</p>
-            )}
+            {errors.transaction && <p className="text-xs text-red-400">{errors.transaction}</p>}
           </div>
 
           {/* Category + Type */}
@@ -159,9 +165,7 @@ export function AddTransactionDialog({ onAdd }: AddTransactionDialogProps) {
                   ))}
                 </SelectContent>
               </Select>
-              {errors.category && (
-                <p className="text-xs text-red-400">{errors.category}</p>
-              )}
+              {errors.category && <p className="text-xs text-red-400">{errors.category}</p>}
             </div>
 
             <div className="flex flex-col gap-1.5">
@@ -175,9 +179,7 @@ export function AddTransactionDialog({ onAdd }: AddTransactionDialogProps) {
                   <SelectItem value="Debit">Debit</SelectItem>
                 </SelectContent>
               </Select>
-              {errors.type && (
-                <p className="text-xs text-red-400">{errors.type}</p>
-              )}
+              {errors.type && <p className="text-xs text-red-400">{errors.type}</p>}
             </div>
           </div>
 
@@ -192,9 +194,7 @@ export function AddTransactionDialog({ onAdd }: AddTransactionDialogProps) {
                 value={form.amount}
                 onChange={(e) => update("amount", e.target.value)}
               />
-              {errors.amount && (
-                <p className="text-xs text-red-400">{errors.amount}</p>
-              )}
+              {errors.amount && <p className="text-xs text-red-400">{errors.amount}</p>}
             </div>
 
             <div className="flex flex-col gap-1.5">
@@ -219,9 +219,7 @@ export function AddTransactionDialog({ onAdd }: AddTransactionDialogProps) {
                   />
                 </PopoverContent>
               </Popover>
-              {errors.date && (
-                <p className="text-xs text-red-400">{errors.date}</p>
-              )}
+              {errors.date && <p className="text-xs text-red-400">{errors.date}</p>}
             </div>
           </div>
 
@@ -239,9 +237,7 @@ export function AddTransactionDialog({ onAdd }: AddTransactionDialogProps) {
                   ))}
                 </SelectContent>
               </Select>
-              {errors.method && (
-                <p className="text-xs text-red-400">{errors.method}</p>
-              )}
+              {errors.method && <p className="text-xs text-red-400">{errors.method}</p>}
             </div>
 
             <div className="flex flex-col gap-1.5">
@@ -260,10 +256,9 @@ export function AddTransactionDialog({ onAdd }: AddTransactionDialogProps) {
 
         </div>
 
-        {/* Footer — uses built-in showCloseButton from your dialog.tsx */}
         <DialogFooter showCloseButton>
-          <Button onClick={handleSubmit}>
-            Add Transaction
+          <Button onClick={handleSubmit} disabled={saving}>
+            {saving ? "Saving..." : "Add Transaction"}
           </Button>
         </DialogFooter>
 

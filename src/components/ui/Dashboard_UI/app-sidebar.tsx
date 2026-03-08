@@ -63,7 +63,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       },
       {
         title: "AI Assistant",
-        url: "/dashboard/ai",
+        url: "/dashboard/ai-assistant",
         icon: IconRobot,
       },
     ],

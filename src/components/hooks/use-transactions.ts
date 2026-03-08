@@ -1,10 +1,11 @@
+// src/components/hooks/use-transactions.ts
 import { useEffect, useState } from "react"
 import { supabase } from "@/lib/supabase"
 import { useAuth } from "@/components/hooks/use-auth"
 
 export type Transaction = {
-  id: number
-  user_id: string
+  id: number            // kept as number to match data-table.tsx schema expectation
+  firebase_uid: string
   transaction: string
   category: string
   amount: number
@@ -18,34 +19,33 @@ export type Transaction = {
 export function useTransactions() {
   const { user } = useAuth()
   const [transactions, setTransactions] = useState<Transaction[]>([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
+  const [loading, setLoading]           = useState(true)
+  const [error,   setError]             = useState<string | null>(null)
 
-  // Fetch all transactions for current user
   const fetchTransactions = async () => {
     if (!user) return
     setLoading(true)
+
     const { data, error } = await supabase
       .from("transactions")
       .select("*")
-      .eq("user_id", user.uid)
+      .eq("firebase_uid", user.uid)
       .order("date", { ascending: false })
 
-    if (error) {
-      setError(error.message)
-    } else {
-      setTransactions(data || [])
-    }
+    if (error) setError(error.message)
+    else setTransactions(data || [])
+
     setLoading(false)
   }
 
-  // Add a new transaction
-  const addTransaction = async (t: Omit<Transaction, "id" | "user_id" | "created_at">) => {
+  const addTransaction = async (
+    t: Omit<Transaction, "id" | "firebase_uid" | "created_at">
+  ) => {
     if (!user) return { error: "Not logged in" }
 
     const { data, error } = await supabase
       .from("transactions")
-      .insert([{ ...t, user_id: user.uid }])
+      .insert([{ ...t, firebase_uid: user.uid }])
       .select()
       .single()
 
@@ -54,11 +54,14 @@ export function useTransactions() {
       return { error: error.message }
     }
 
-    setTransactions((prev) => [data, ...prev])
+    setTransactions((prev) => {
+      const exists = prev.some((tx) => tx.id === data.id)
+      return exists ? prev : [data, ...prev]
+    })
+
     return { data }
   }
 
-  // Delete a transaction
   const deleteTransaction = async (id: number) => {
     if (!user) return
 
@@ -66,43 +69,38 @@ export function useTransactions() {
       .from("transactions")
       .delete()
       .eq("id", id)
-      .eq("user_id", user.uid)
+      .eq("firebase_uid", user.uid)
 
-    if (error) {
-      setError(error.message)
-    } else {
-      setTransactions((prev) => prev.filter((t) => t.id !== id))
-    }
+    if (error) setError(error.message)
+    else setTransactions((prev) => prev.filter((t) => t.id !== id))
   }
 
-  // Fetch on mount and when user changes
   useEffect(() => {
-    if (user) {
-      fetchTransactions()
+    if (user) fetchTransactions()
+    else {
+      setTransactions([])
+      setLoading(false)
     }
   }, [user])
 
-  // Realtime subscription
   useEffect(() => {
     if (!user) return
 
     const channel = supabase
-      .channel("transactions-realtime")
+      .channel(`transactions-${user.uid}`)
       .on(
         "postgres_changes",
         {
           event: "*",
           schema: "public",
           table: "transactions",
-          filter: `user_id=eq.${user.uid}`,
+          filter: `firebase_uid=eq.${user.uid}`,
         },
         (payload) => {
           if (payload.eventType === "INSERT") {
             setTransactions((prev) => {
-              // Avoid duplicates
               const exists = prev.some((t) => t.id === (payload.new as Transaction).id)
-              if (exists) return prev
-              return [payload.new as Transaction, ...prev]
+              return exists ? prev : [payload.new as Transaction, ...prev]
             })
           }
           if (payload.eventType === "DELETE") {
@@ -123,9 +121,7 @@ export function useTransactions() {
       )
       .subscribe()
 
-    return () => {
-      supabase.removeChannel(channel)
-    }
+    return () => { supabase.removeChannel(channel) }
   }, [user])
 
   return {

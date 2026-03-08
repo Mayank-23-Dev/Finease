@@ -38,6 +38,8 @@ export function LoginPage() {
 
       const user = userCredential.user
 
+      await user.reload()
+
       if (!user.emailVerified) {
         setError("Please verify your email before logging in.")
         return

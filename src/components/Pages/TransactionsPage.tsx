@@ -1,3 +1,4 @@
+// src/components/Pages/TransactionsPage.tsx
 "use client"
 
 import * as React from "react"
@@ -6,29 +7,30 @@ import { TransactionFiltersBar, type TransactionFilters } from "@/components/ui/
 import { AddTransactionDialog } from "@/components/ui/Transaction_UI/add-transaction-dialog"
 import { useTransactions, type Transaction } from "@/components/hooks/use-transactions"
 
-type TransactionInput = Omit<Transaction, "id" | "user_id" | "created_at">
+// What AddTransactionDialog passes back — no id/firebase_uid/created_at
+type TransactionInput = Omit<Transaction, "id" | "firebase_uid" | "created_at">
 
 export default function TransactionsPage() {
   const { transactions, loading, addTransaction } = useTransactions()
 
   const [filters, setFilters] = React.useState<TransactionFilters>({
-    search: "",
+    search:   "",
     category: "",
-    type: "",
-    status: "",
-    method: "",
+    type:     "",
+    status:   "",
+    method:   "",
     dateFrom: "",
-    dateTo: "",
+    dateTo:   "",
   })
 
   const filtered = React.useMemo(() => {
-    const passesFilters = (t: typeof transactions[0]) => {
+    const passesFilters = (t: Transaction) => {
       if (filters.category && t.category !== filters.category) return false
-      if (filters.type && t.type !== filters.type) return false
-      if (filters.status && t.status !== filters.status) return false
-      if (filters.method && t.method !== filters.method) return false
-      if (filters.dateFrom && t.date < filters.dateFrom) return false
-      if (filters.dateTo && t.date > filters.dateTo) return false
+      if (filters.type     && t.type     !== filters.type)     return false
+      if (filters.status   && t.status   !== filters.status)   return false
+      if (filters.method   && t.method   !== filters.method)   return false
+      if (filters.dateFrom && t.date < filters.dateFrom)       return false
+      if (filters.dateTo   && t.date > filters.dateTo)         return false
       return true
     }
 
@@ -42,10 +44,10 @@ export default function TransactionsPage() {
       .map((t) => {
         const name = t.transaction.toLowerCase()
         let score = 0
-        if (name === query) score = 100
-        else if (name.startsWith(query)) score = 80
-        else if (name.split(" ").some((word) => word.startsWith(query))) score = 60
-        else if (name.includes(query)) score = 40
+        if (name === query)                                          score = 100
+        else if (name.startsWith(query))                             score = 80
+        else if (name.split(" ").some((w) => w.startsWith(query)))  score = 60
+        else if (name.includes(query))                               score = 40
         return { t, score }
       })
       .filter(({ score, t }) => score > 0 && passesFilters(t))
@@ -53,16 +55,9 @@ export default function TransactionsPage() {
       .map(({ t }) => t)
   }, [transactions, filters])
 
-  const handleAddTransaction = async (transaction: TransactionInput) => {
-    const result = await addTransaction({
-      transaction: transaction.transaction,
-      category: transaction.category,
-      amount: transaction.amount,
-      date: transaction.date,
-      type: transaction.type,
-      method: transaction.method,
-      status: transaction.status,
-    })
+  // Called by AddTransactionDialog — just pass straight to the hook
+  const handleAddTransaction = async (input: TransactionInput) => {
+    const result = await addTransaction(input)
     if (result?.error) console.error("Failed to add transaction:", result.error)
   }
 
@@ -77,8 +72,7 @@ export default function TransactionsPage() {
             <p className="text-sm text-muted-foreground mt-0.5">
               {loading
                 ? "Loading..."
-                : `${filtered.length} transaction${filtered.length !== 1 ? "s" : ""} found`
-              }
+                : `${filtered.length} transaction${filtered.length !== 1 ? "s" : ""} found`}
             </p>
           </div>
           <AddTransactionDialog onAdd={handleAddTransaction} />

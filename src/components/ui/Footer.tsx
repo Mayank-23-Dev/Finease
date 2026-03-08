@@ -1,4 +1,5 @@
 "use client";
+import { Link } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { motion, useReducedMotion } from "framer-motion";
 import type { ReactNode } from "react";
@@ -109,14 +110,14 @@ export function Footer() {
                                 <ul className="mt-4 space-y-2 text-muted-foreground text-sm">
                                     {section.links.map((link) => (
                                         <li key={link.title}>
-                                            <a
+                                            <Link
+                                                to={link.href}
                                                 className="inline-flex items-center duration-250 hover:text-foreground [&_svg]:me-1 [&_svg]:size-4"
-                                                href={link.href}
                                                 key={`${section.label}-${link.title}`}
                                             >
                                                 {link.icon}
                                                 {link.title}
-                                            </a>
+                                            </Link>
                                         </li>
                                     ))}
                                 </ul>

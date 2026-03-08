@@ -10,6 +10,10 @@ import { LoginPage } from "@/components/ui/SignUp/Login-page";
 import SettingsPage from "@/components/Pages/Settings";
 import DashboardHome from "@/components/Pages/DashboardHome";
 import TransactionsPage from "@/components/Pages/TransactionsPage";
+import BudgetPage from "@/components/Pages/BudgetPage";
+import ReportsPage from "@/components/Pages/ReportsPage";
+import AIAssistantPage from "@/components/Pages/AIAssistantPage";
+import Features from "@/components/ui/Footer_pages/feature";
 
 export default function App() {
   return (
@@ -43,12 +47,16 @@ export default function App() {
               </ProtectedRoute>
             }
           >
-            <Route index element={<DashboardHome />} />
-            <Route path="settings" element={<SettingsPage />} />
+            <Route index             element={<DashboardHome />}     />
             <Route path="transactions" element={<TransactionsPage />} />
+            <Route path="budget"       element={<BudgetPage />}       />
+            <Route path="reports"      element={<ReportsPage />}      />
+            <Route path="ai-assistant" element={<AIAssistantPage />}  />
+            <Route path="settings"     element={<SettingsPage />}     />
           </Route>
 
-          <Route path="*" element={<NotFound />} />
+          <Route path="/features" element={<Features />} />
+          <Route path="*"         element={<NotFound />} />
 
         </Routes>
       </div>
