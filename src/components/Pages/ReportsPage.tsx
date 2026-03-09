@@ -1,12 +1,15 @@
 // src/components/Pages/ReportsPage.tsx
 "use client"
 
-import { useTransactions } from "@/components/hooks/use-transactions"
-import { MonthlyChart }     from "@/components/ui/Reports_UI/monthly-chart"
-import { CategoryChart }    from "@/components/ui/Reports_UI/category-chart"
-import { ReportsSummary }   from "@/components/ui/Reports_UI/reports-summary"
-import { MonthPicker }      from "@/components/ui/Reports_UI/month-picker"
 import * as React from "react"
+
+import { useTransactions } from "@/components/hooks/use-transactions"
+import { useBudgets } from "@/components/hooks/use-budgets"
+
+import { MonthlyChart } from "@/components/ui/Reports_UI/monthly-chart"
+import { CategoryChart } from "@/components/ui/Reports_UI/category-chart"
+import { ReportsSummary } from "@/components/ui/Reports_UI/reports-summary"
+import { MonthPicker } from "@/components/ui/Reports_UI/month-picker"
 
 function getCurrentMonth() {
   const now = new Date()
@@ -14,13 +17,22 @@ function getCurrentMonth() {
 }
 
 export default function ReportsPage() {
+
   const { transactions, loading } = useTransactions()
+  const { budgets } = useBudgets()
+
   const [month, setMonth] = React.useState(getCurrentMonth())
 
-  // Filter by selected month
+  // Filter transactions by month
   const filtered = React.useMemo(() =>
     transactions.filter((t) => t.date.startsWith(month)),
     [transactions, month]
+  )
+
+  // Filter budgets for selected month
+  const filteredBudgets = React.useMemo(() =>
+    budgets.filter((b) => b.month === month),
+    [budgets, month]
   )
 
   return (
@@ -30,11 +42,14 @@ export default function ReportsPage() {
         {/* Header */}
         <div className="flex items-center justify-between px-4 lg:px-6">
           <div>
-            <h1 className="text-2xl font-semibold tracking-tight">Reports</h1>
+            <h1 className="text-2xl font-semibold tracking-tight">
+              Reports
+            </h1>
             <p className="text-sm text-muted-foreground mt-0.5">
               Financial overview and analytics
             </p>
           </div>
+
           <MonthPicker value={month} onChange={setMonth} />
         </div>
 
@@ -45,9 +60,18 @@ export default function ReportsPage() {
         ) : (
           <>
             <ReportsSummary transactions={filtered} />
+
             <div className="grid grid-cols-1 gap-4 px-4 lg:px-6 lg:grid-cols-2">
-              <MonthlyChart  transactions={transactions} />
-              <CategoryChart transactions={filtered} />
+
+              <MonthlyChart
+                transactions={filtered}
+              />
+
+              <CategoryChart
+                transactions={filtered}
+                budgets={filteredBudgets}
+              />
+
             </div>
           </>
         )}

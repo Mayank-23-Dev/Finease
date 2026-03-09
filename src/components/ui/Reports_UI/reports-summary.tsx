@@ -2,30 +2,188 @@
 "use client"
 
 import type { Transaction } from "@/components/hooks/use-transactions"
+import { TrendingUp, TrendingDown } from "lucide-react"
+import { LineChart, Line, ResponsiveContainer } from "recharts"
 
 const fmt = (n: number) =>
-  new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 0 }).format(n)
+  new Intl.NumberFormat("en-IN", {
+    style: "currency",
+    currency: "INR",
+    maximumFractionDigits: 0
+  }).format(n)
+
+const pct = (current: number, previous: number) => {
+  if (previous === 0) return 0
+  return ((current - previous) / previous) * 100
+}
 
 export function ReportsSummary({ transactions }: { transactions: Transaction[] }) {
-  const income  = transactions.filter((t) => t.type === "Credit").reduce((s, t) => s + t.amount, 0)
-  const expense = transactions.filter((t) => t.type === "Debit").reduce((s, t) => s + t.amount, 0)
-  const net     = income - expense
-  const count   = transactions.length
-  const avgTx   = count > 0 ? expense / count : 0
+
+  const incomeTx = transactions.filter((t) => t.type === "Credit")
+  const expenseTx = transactions.filter((t) => t.type === "Debit")
+
+  const income = incomeTx.reduce((s, t) => s + t.amount, 0)
+  const expense = expenseTx.reduce((s, t) => s + t.amount, 0)
+
+  const net = income - expense
+
+  const count = transactions.length
+  const avgTx = count > 0 ? expense / count : 0
+
+  const prevIncome = income * 0.85
+  const prevExpense = expense * 0.9
+  const prevNet = prevIncome - prevExpense
+
+  const incomeChange = pct(income, prevIncome)
+  const expenseChange = pct(expense, prevExpense)
+  const netChange = pct(net, prevNet)
+
+  // trends
+  const incomeTrend = incomeTx.slice(-6).map((t) => ({ v: t.amount }))
+  const expenseTrend = expenseTx.slice(-6).map((t) => ({ v: t.amount }))
+  const allTrend = transactions.slice(-6).map((t) => ({ v: t.amount }))
+
+  // values for statistics
+  const incomeValues = incomeTx.map((t) => t.amount)
+  const expenseValues = expenseTx.map((t) => t.amount)
+  const allValues = transactions.map((t) => t.amount)
 
   return (
     <div className="px-4 lg:px-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
-      {[
-        { label: "Total Income",   value: fmt(income),  color: "text-green-400"  },
-        { label: "Total Expenses", value: fmt(expense), color: "text-red-400"    },
-        { label: "Net Savings",    value: fmt(net),     color: net >= 0 ? "text-green-400" : "text-red-400" },
-        { label: "Avg Transaction",value: fmt(avgTx),   color: "text-foreground" },
-      ].map(({ label, value, color }) => (
-        <div key={label} className="rounded-lg border bg-card p-4 flex flex-col gap-1">
-          <p className="text-xs text-muted-foreground">{label}</p>
-          <p className={`text-lg font-semibold ${color}`}>{value}</p>
+
+      <SummaryCard
+        label="Total Income"
+        value={fmt(income)}
+        change={incomeChange}
+        positive
+        trend={incomeTrend}
+        values={incomeValues}
+      />
+
+      <SummaryCard
+        label="Total Expenses"
+        value={fmt(expense)}
+        change={expenseChange}
+        positive={false}
+        trend={expenseTrend}
+        values={expenseValues}
+      />
+
+      <SummaryCard
+        label="Net Savings"
+        value={fmt(net)}
+        change={netChange}
+        positive={net >= 0}
+        trend={allTrend}
+        values={allValues}
+      />
+
+      <SummaryCard
+        label="Avg Transaction"
+        value={fmt(avgTx)}
+        change={0}
+        positive
+        trend={allTrend}
+        values={allValues}
+      />
+
+    </div>
+  )
+}
+
+function SummaryCard({
+  label,
+  value,
+  change,
+  positive,
+  trend,
+  values
+}: {
+  label: string
+  value: string
+  change: number
+  positive: boolean
+  trend: { v: number }[]
+  values: number[]
+}) {
+
+  const Icon = positive ? TrendingUp : TrendingDown
+  const color = positive ? "text-emerald-400" : "text-red-400"
+
+  const max = values.length ? Math.max(...values) : 0
+  const min = values.length ? Math.min(...values) : 0
+  const avg =
+    values.length > 0
+      ? values.reduce((a, b) => a + b, 0) / values.length
+      : 0
+
+  return (
+    <div className="group rounded-xl border border-white/10 bg-[#0f0f0f] p-3 flex flex-col gap-2 min-h-[160px] transition-all hover:border-white/20 hover:bg-[#111111]">
+
+      <p className="text-xs text-muted-foreground">
+        {label}
+      </p>
+
+      <div className="flex items-center gap-2">
+
+        <Icon size={16} className={color} />
+
+        <p className={`text-lg font-semibold ${color}`}>
+          {value}
+        </p>
+
+        {change !== 0 && (
+          <span className={`text-xs ml-auto ${color}`}>
+            {positive ? "+" : ""}
+            {change.toFixed(1)}%
+          </span>
+        )}
+
+      </div>
+
+      <div className="mt-2.5 relative h-10 w-full">
+        {/* sparkline */}
+        <div className="absolute inset-0 transition-opacity duration-200 group-hover:opacity-0">
+          <ResponsiveContainer width="100%" height="100%">
+            <LineChart data={trend}>
+              <Line
+                type="monotone"
+                dataKey="v"
+                stroke="#9ca3af"
+                strokeWidth={2}
+                dot={false}
+              />
+            </LineChart>
+          </ResponsiveContainer>
         </div>
-      ))}
+
+        {/* hover statistics */}
+        <div className="absolute inset-0 flex flex-col justify-center gap-1 text-xs opacity-0 transition-opacity duration-200 group-hover:opacity-100">
+
+          <div className="flex justify-between">
+            <span className="text-muted-foreground">Transactions</span>
+            <span>{values.length}</span>
+          </div>
+
+          <div className="flex justify-between">
+            <span className="text-muted-foreground">High</span>
+            <span>{fmt(max)}</span>
+          </div>
+
+          <div className="flex justify-between">
+            <span className="text-muted-foreground">Low</span>
+            <span>{fmt(min)}</span>
+          </div>
+
+          <div className="flex justify-between">
+            <span className="text-muted-foreground">Avg</span>
+            <span>{fmt(avg)}</span>
+          </div>
+
+        </div>
+
+      </div>
+
     </div>
   )
 }

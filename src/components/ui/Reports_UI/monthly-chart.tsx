@@ -7,18 +7,18 @@ import {
   Tooltip, Legend, ResponsiveContainer,
 } from "recharts"
 
-const MONTH_NAMES = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"]
+const MONTH_NAMES = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
 
 export function MonthlyChart({ transactions }: { transactions: Transaction[] }) {
   // Build 12-month map
   const map: Record<string, { month: string; income: number; expense: number }> = {}
 
   transactions.forEach((t) => {
-    const d   = new Date(t.date)
+    const d = new Date(t.date)
     const key = MONTH_NAMES[d.getMonth()]
     if (!map[key]) map[key] = { month: key, income: 0, expense: 0 }
-    if (t.type === "Credit") map[key].income  += t.amount
-    else                     map[key].expense += t.amount
+    if (t.type === "Credit") map[key].income += t.amount
+    else map[key].expense += t.amount
   })
 
   const data = MONTH_NAMES
@@ -32,23 +32,97 @@ export function MonthlyChart({ transactions }: { transactions: Transaction[] }) 
       </div>
     )
   }
+  const CustomTooltip = ({ active, payload, label }: any) => {
+    if (!active || !payload || payload.length === 0) return null
 
+    const income = payload.find((p: any) => p.dataKey === "income")?.value || 0
+    const expense = payload.find((p: any) => p.dataKey === "expense")?.value || 0
+
+    return (
+      <div
+        style={{
+          background: "#0f0f0f",
+          border: "1px solid rgba(255,255,255,0.08)",
+          borderRadius: 10,
+          padding: "10px 14px",
+          fontSize: 13,
+          color: "#fff"
+        }}
+      >
+        <p style={{ marginBottom: 6, fontWeight: 600 }}>{label}</p>
+
+        <div style={{ display: "flex", justifyContent: "space-between", gap: 20 }}>
+          <span style={{ color: "#9ca3af" }}>Income</span>
+          <span>₹{income.toLocaleString("en-IN")}</span>
+        </div>
+
+        <div style={{ display: "flex", justifyContent: "space-between", gap: 20 }}>
+          <span style={{ color: "#9ca3af" }}>Expense</span>
+          <span>₹{expense.toLocaleString("en-IN")}</span>
+        </div>
+      </div>
+    )
+  }
   return (
-    <div className="rounded-lg border bg-card p-4 flex flex-col gap-3">
-      <p className="text-sm font-medium">Monthly Overview</p>
+    <div className="rounded-xl border border-white/10 bg-[#0f0f0f] p-5">
+      <p className="font-semibold text-sm text-[#979797] mb-3">Monthly Overview</p>
       <ResponsiveContainer width="100%" height={240}>
         <BarChart data={data} barGap={4} barCategoryGap="30%">
-          <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-          <XAxis dataKey="month" tick={{ fontSize: 12 }} stroke="hsl(var(--muted-foreground))" />
-          <YAxis tick={{ fontSize: 12 }} stroke="hsl(var(--muted-foreground))"
-            tickFormatter={(v) => `₹${v >= 1000 ? `${(v/1000).toFixed(0)}k` : v}`} />
-          <Tooltip
-            formatter={(v: number) => [`₹${v.toLocaleString("en-IN")}`, ""]}
-            contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: 8 }}
+
+          <defs>
+            <linearGradient id="incomeGradient" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="#ffffff" stopOpacity={0.9} />
+              <stop offset="100%" stopColor="#ffffff" stopOpacity={0.2} />
+            </linearGradient>
+
+            <linearGradient id="expenseGradient" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="#9ca3af" stopOpacity={0.8} />
+              <stop offset="100%" stopColor="#9ca3af" stopOpacity={0.2} />
+            </linearGradient>
+          </defs>
+
+          <CartesianGrid
+            strokeDasharray="3 3"
+            stroke="rgba(255,255,255,0.06)"
           />
-          <Legend />
-          <Bar dataKey="income"  name="Income"  fill="#4ade80" radius={[4,4,0,0]} />
-          <Bar dataKey="expense" name="Expense" fill="#f87171" radius={[4,4,0,0]} />
+
+          <XAxis
+            dataKey="month"
+            tick={{ fontSize: 12, fill: "#ffffffff" }}
+            axisLine={false}
+            tickLine={false}
+          />
+
+          <YAxis
+            tick={{ fontSize: 12, fill: "#ffffffff" }}
+            axisLine={false}
+            tickLine={false}
+            tickFormatter={(v) =>
+              `₹${v >= 1000 ? `${(v / 1000).toFixed(0)}k` : v}`
+            }
+          />
+
+          <Tooltip
+            cursor={{ fill: "transparent" }}
+            content={<CustomTooltip />}
+          />
+
+          <Legend wrapperStyle={{ color: "#9ca3af", fontSize: "12px" }} />
+
+          <Bar
+            dataKey="income"
+            name="Income"
+            fill="url(#incomeGradient)"
+            radius={[6, 6, 0, 0]}
+          />
+
+          <Bar
+            dataKey="expense"
+            name="Expense"
+            fill="url(#expenseGradient)"
+            radius={[6, 6, 0, 0]}
+          />
+
         </BarChart>
       </ResponsiveContainer>
     </div>

@@ -1,44 +1,197 @@
-// src/components/ui/Reports_UI/category-chart.tsx
 "use client"
 
 import type { Transaction } from "@/components/hooks/use-transactions"
-import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, Legend } from "recharts"
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer
+} from "recharts"
 
-const COLORS = ["#f87171","#fb923c","#facc15","#4ade80","#60a5fa","#c084fc","#f472b6","#94a3b8"]
+const CustomTooltip = ({ active, payload, label }: any) => {
+  if (!active || !payload || payload.length === 0) return null
 
-export function CategoryChart({ transactions }: { transactions: Transaction[] }) {
-  const map: Record<string, number> = {}
+  const spent = payload[0]?.value ?? 0
+  const budget = payload[0]?.payload?.budget ?? 0
+  const percent = budget ? Math.round((spent / budget) * 100) : 0
+
+  const color =
+    percent > 90 ? "#ef4444" :
+    percent > 70 ? "#facc15" :
+    "#22c55e"
+
+  return (
+    <div
+      style={{
+        background: "#0f0f0f",
+        border: "1px solid rgba(255,255,255,0.08)",
+        borderRadius: 12,
+        padding: "12px 16px",
+        fontSize: 13,
+        color: "#fff",
+        minWidth: 180
+      }}
+    >
+      <div style={{ fontWeight: 600, marginBottom: 8 }}>
+        {label}
+      </div>
+
+      <div style={{ display: "flex", justifyContent: "space-between" }}>
+        <span style={{ color: "#9ca3af" }}>Spent</span>
+        <span>₹{spent.toLocaleString("en-IN")}</span>
+      </div>
+
+      <div style={{ display: "flex", justifyContent: "space-between" }}>
+        <span style={{ color: "#9ca3af" }}>Budget</span>
+        <span>₹{budget.toLocaleString("en-IN")}</span>
+      </div>
+
+      {/* Progress Bar */}
+      <div
+        style={{
+          marginTop: 8,
+          height: 6,
+          borderRadius: 6,
+          background: "rgba(255,255,255,0.08)",
+          overflow: "hidden"
+        }}
+      >
+        <div
+          style={{
+            width: `${Math.min(percent, 100)}%`,
+            background: color,
+            height: "100%"
+          }}
+        />
+      </div>
+
+      <div
+        style={{
+          marginTop: 6,
+          display: "flex",
+          justifyContent: "space-between"
+        }}
+      >
+        <span style={{ color: "#9ca3af" }}>Used</span>
+        <span style={{ color }}>{percent}%</span>
+      </div>
+    </div>
+  )
+}
+
+export function CategoryChart({
+  transactions,
+  budgets
+}: {
+  transactions: Transaction[]
+  budgets: { category: string; amount: number }[]
+}) {
+
+  const map: Record<string, { spent: number; budget: number }> = {}
+
+  // Initialize budgets
+  budgets.forEach((b) => {
+    map[b.category] = {
+      spent: 0,
+      budget: b.amount
+    }
+  })
+
+  // Add spending
   transactions
     .filter((t) => t.type === "Debit")
-    .forEach((t) => { map[t.category] = (map[t.category] ?? 0) + t.amount })
+    .forEach((t) => {
+      const category = t.category || "Other"
 
-  const data = Object.entries(map).map(([name, value]) => ({ name, value }))
+      if (!map[category]) {
+        map[category] = { spent: 0, budget: 0 }
+      }
+
+      map[category].spent += t.amount
+    })
+
+  const data = Object.entries(map)
+    .map(([name, values]) => ({
+      name,
+      value: values.spent,
+      budget: values.budget
+    }))
+    .sort((a, b) => b.value - a.value)
 
   if (data.length === 0) {
     return (
-      <div className="rounded-lg border bg-card p-6 flex items-center justify-center h-64 text-sm text-muted-foreground">
+      <div className="rounded-xl border border-white/10 bg-[#0f0f0f] p-6 flex items-center justify-center h-64 text-sm text-muted-foreground">
         No expense data for this month
       </div>
     )
   }
 
   return (
-    <div className="rounded-lg border bg-card p-4 flex flex-col gap-3">
-      <p className="text-sm font-medium">Expenses by Category</p>
+    <div className="rounded-xl border border-white/10 bg-[#0f0f0f] p-4 flex flex-col gap-3">
+      <p className="text-sm font-semibold text-[#979797]">
+        Expenses by Category
+      </p>
+
       <ResponsiveContainer width="100%" height={240}>
-        <PieChart>
-          <Pie data={data} cx="50%" cy="50%" innerRadius={60} outerRadius={90}
-            dataKey="value" nameKey="name" paddingAngle={3}>
-            {data.map((_, i) => (
-              <Cell key={i} fill={COLORS[i % COLORS.length]} />
-            ))}
-          </Pie>
-          <Tooltip
-            formatter={(v: number) => [`₹${v.toLocaleString("en-IN")}`, ""]}
-            contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: 8 }}
+        <BarChart
+          data={data}
+          layout="vertical"
+          margin={{ top: 10, right: 20, left: 20, bottom: 0 }}
+          barCategoryGap={20}
+        >
+
+          {/* Gradient */}
+          <defs>
+            <linearGradient id="expenseGradient" x1="0" y1="1" x2="0" y2="0">
+              <stop offset="0%" stopColor="#1f2937" />
+              <stop offset="40%" stopColor="#6b7280" />
+              <stop offset="70%" stopColor="#9ca3af" />
+              <stop offset="100%" stopColor="#ffffff" />
+            </linearGradient>
+          </defs>
+
+          <CartesianGrid
+            stroke="rgba(255,255,255,0.05)"
+            vertical={true}
+            horizontal={false}
           />
-          <Legend iconType="circle" iconSize={8} />
-        </PieChart>
+
+          <XAxis
+            type="number"
+            axisLine={false}
+            tickLine={false}
+            tick={{ fill: "#dcdcdcff", fontSize: 12 }}
+            tickFormatter={(v) =>
+              v >= 1000 ? `${(v / 1000).toFixed(0)}k` : v
+            }
+          />
+
+          <YAxis
+            type="category"
+            dataKey="name"
+            width={90}
+            axisLine={false}
+            tickLine={false}
+            tick={{ fill: "#dcdcdcff", fontSize: 12 }}
+          />
+
+          <Tooltip
+            content={<CustomTooltip />}
+            cursor={false}
+          />
+
+          <Bar
+            dataKey="value"
+            fill="url(#expenseGradient)"
+            radius={[0, 6, 6, 0]}
+            barSize={18}
+            background={false}
+          />
+
+        </BarChart>
       </ResponsiveContainer>
     </div>
   )
