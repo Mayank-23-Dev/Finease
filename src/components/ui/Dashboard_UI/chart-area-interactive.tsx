@@ -66,7 +66,7 @@ export function ChartAreaInteractive({ data }: { data: ChartData[] }) {
             <XAxis
               dataKey="date"
               type="category"
-              interval={0}
+              interval="preserveStartEnd"
               tickLine={false}
               axisLine={false}
               tickMargin={8}

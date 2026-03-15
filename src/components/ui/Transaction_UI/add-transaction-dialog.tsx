@@ -52,19 +52,19 @@ const METHODS = [
 
 const emptyForm = {
   transaction: "",
-  category:    "",
-  amount:      "",
-  date:        undefined as Date | undefined,
-  type:        "",
-  method:      "",
-  status:      "Completed",
+  category: "",
+  amount: "",
+  date: undefined as Date | undefined,
+  type: "",
+  method: "",
+  status: "Completed",
 }
 
 export function AddTransactionDialog({ onAdd }: AddTransactionDialogProps) {
-  const [open,    setOpen]    = React.useState(false)
-  const [form,    setForm]    = React.useState(emptyForm)
-  const [errors,  setErrors]  = React.useState<Record<string, string>>({})
-  const [saving,  setSaving]  = React.useState(false)
+  const [open, setOpen] = React.useState(false)
+  const [form, setForm] = React.useState(emptyForm)
+  const [errors, setErrors] = React.useState<Record<string, string>>({})
+  const [saving, setSaving] = React.useState(false)
 
   const update = (key: keyof typeof emptyForm, value: string | Date | undefined) => {
     setForm((prev) => ({ ...prev, [key]: value }))
@@ -73,13 +73,13 @@ export function AddTransactionDialog({ onAdd }: AddTransactionDialogProps) {
 
   const validate = () => {
     const e: Record<string, string> = {}
-    if (!form.transaction.trim())                                  e.transaction = "Required"
-    if (!form.category)                                            e.category    = "Required"
+    if (!form.transaction.trim()) e.transaction = "Required"
+    if (!form.category) e.category = "Required"
     if (!form.amount || isNaN(Number(form.amount)) || Number(form.amount) <= 0)
-                                                                   e.amount      = "Enter a valid amount"
-    if (!form.date)                                                e.date        = "Required"
-    if (!form.type)                                                e.type        = "Required"
-    if (!form.method)                                              e.method      = "Required"
+      e.amount = "Enter a valid amount"
+    if (!form.date) e.date = "Required"
+    if (!form.type) e.type = "Required"
+    if (!form.method) e.method = "Required"
     return e
   }
 
@@ -95,12 +95,12 @@ export function AddTransactionDialog({ onAdd }: AddTransactionDialogProps) {
       await onAdd({
         // ✅ No id here — Supabase generates UUID automatically
         transaction: form.transaction.trim(),
-        category:    form.category,
-        amount:      Number(form.amount),
-        date:        format(form.date!, "yyyy-MM-dd"),
-        type:        form.type,
-        method:      form.method,
-        status:      form.status,
+        category: form.category,
+        amount: Number(form.amount),
+        date: format(form.date!, "yyyy-MM-dd"),
+        type: form.type,
+        method: form.method,
+        status: form.status,
       })
       setForm(emptyForm)
       setErrors({})
@@ -201,16 +201,23 @@ export function AddTransactionDialog({ onAdd }: AddTransactionDialogProps) {
               <Label>Date</Label>
               <Popover>
                 <PopoverTrigger asChild>
-                  <Button
-                    variant="outline"
-                    data-empty={!form.date}
-                    className="w-full justify-between font-normal data-[empty=true]:text-muted-foreground"
+                  <button
+                    type="button"
+                    className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 text-sm ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50"
                   >
-                    {form.date ? format(form.date, "dd MMM yyyy") : <span>Pick a date</span>}
-                    <ChevronDownIcon className="size-4" />
-                  </Button>
+                    {form.date ? format(form.date, "dd MMM yyyy") : (
+                      <span className="text-muted-foreground">Pick a date</span>
+                    )}
+                    <ChevronDownIcon className="size-4 opacity-60" />
+                  </button>
                 </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="start">
+
+                <PopoverContent
+                  side="top"
+                  align="start"
+                  avoidCollisions={false}
+                  className="w-auto p-0 z-50"
+                >
                   <Calendar
                     mode="single"
                     selected={form.date}
