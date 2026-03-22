@@ -62,6 +62,35 @@ export function useTransactions() {
     return { data }
   }
 
+  // ── NEW: updateTransaction ──────────────────────────────────────────────────
+  const updateTransaction = async (
+    id: number,
+    updates: Omit<Transaction, "id" | "firebase_uid" | "created_at">
+  ) => {
+    if (!user) return { error: "Not logged in" }
+
+    const { data, error } = await supabase
+      .from("transactions")
+      .update(updates)
+      .eq("id", id)
+      .eq("firebase_uid", user.uid)
+      .select()
+      .single()
+
+    if (error) {
+      setError(error.message)
+      return { error: error.message }
+    }
+
+    // Optimistic local update (realtime will also fire, but this is instant)
+    setTransactions((prev) =>
+      prev.map((t) => (t.id === id ? { ...t, ...data } : t))
+    )
+
+    return { data }
+  }
+  // ───────────────────────────────────────────────────────────────────────────
+
   const deleteTransaction = async (id: number) => {
     if (!user) return
 
@@ -129,6 +158,7 @@ export function useTransactions() {
     loading,
     error,
     addTransaction,
+    updateTransaction,   // ← newly exported
     deleteTransaction,
     refetch: fetchTransactions,
   }

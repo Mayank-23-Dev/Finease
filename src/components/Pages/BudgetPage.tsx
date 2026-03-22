@@ -2,12 +2,12 @@
 "use client"
 
 import { useBudgets } from "@/components/hooks/use-budgets"
-import { BudgetOverview }      from "@/components/ui/Budget_UI/budget-overview"
-import { BudgetList }          from "@/components/ui/Budget_UI/budget-list"
-import { AddBudgetDialog }     from "@/components/ui/Budget_UI/add-budget-dialog"
+import { BudgetOverview }  from "@/components/ui/Budget_UI/budget-overview"
+import { BudgetList }      from "@/components/ui/Budget_UI/budget-list"
+import { AddBudgetDialog } from "@/components/ui/Budget_UI/add-budget-dialog"
 
 export default function BudgetPage() {
-  const { budgets, loading, addBudget, deleteBudget, currentMonth } = useBudgets()
+  const { budgets, loading, addBudget, updateBudget, deleteBudget, currentMonth } = useBudgets()
 
   return (
     <div className="@container/main flex flex-1 flex-col gap-2">
@@ -18,7 +18,9 @@ export default function BudgetPage() {
           <div>
             <h1 className="text-2xl font-semibold tracking-tight">Budget</h1>
             <p className="text-sm text-muted-foreground mt-0.5">
-              {loading ? "Loading..." : `${budgets.length} budget${budgets.length !== 1 ? "s" : ""} for ${currentMonth}`}
+              {loading
+                ? "Loading..."
+                : `${budgets.length} budget${budgets.length !== 1 ? "s" : ""} for ${currentMonth}`}
             </p>
           </div>
           <AddBudgetDialog onAdd={addBudget} />
@@ -31,7 +33,11 @@ export default function BudgetPage() {
         ) : (
           <>
             <BudgetOverview budgets={budgets} />
-            <BudgetList budgets={budgets} onDelete={deleteBudget} />
+            <BudgetList
+              budgets={budgets}
+              onEdit={updateBudget}
+              onDelete={deleteBudget}
+            />
           </>
         )}
 

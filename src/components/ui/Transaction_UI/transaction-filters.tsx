@@ -195,7 +195,7 @@ export function TransactionFiltersBar({ filters, onChange }: TransactionFiltersP
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="w-full text-muted-foreground"
+                  className="w-full text-muted-foreground cursor-pointer"
                   onClick={() => update("dateFrom", "")}
                 >
                   Clear
@@ -230,7 +230,7 @@ export function TransactionFiltersBar({ filters, onChange }: TransactionFiltersP
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="w-full text-muted-foreground"
+                  className="w-full text-muted-foreground cursor-pointer"
                   onClick={() => update("dateTo", "")}
                 >
                   Clear

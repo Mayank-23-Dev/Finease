@@ -7,11 +7,12 @@ import { TransactionFiltersBar, type TransactionFilters } from "@/components/ui/
 import { AddTransactionDialog } from "@/components/ui/Transaction_UI/add-transaction-dialog"
 import { useTransactions, type Transaction } from "@/components/hooks/use-transactions"
 
-// What AddTransactionDialog passes back — no id/firebase_uid/created_at
-type TransactionInput = Omit<Transaction, "id" | "firebase_uid" | "created_at">
+type TransactionInput  = Omit<Transaction, "id" | "firebase_uid" | "created_at">
+type TransactionUpdate = Omit<Transaction, "id" | "firebase_uid" | "created_at">
 
 export default function TransactionsPage() {
-  const { transactions, loading, addTransaction } = useTransactions()
+  const { transactions, loading, addTransaction, updateTransaction, deleteTransaction } =
+    useTransactions()
 
   const [filters, setFilters] = React.useState<TransactionFilters>({
     search:   "",
@@ -55,10 +56,20 @@ export default function TransactionsPage() {
       .map(({ t }) => t)
   }, [transactions, filters])
 
-  // Called by AddTransactionDialog — just pass straight to the hook
   const handleAddTransaction = async (input: TransactionInput) => {
     const result = await addTransaction(input)
     if (result?.error) console.error("Failed to add transaction:", result.error)
+  }
+
+  // ── Edit handler ────────────────────────────────────────────────────────────
+  const handleEditTransaction = async (id: number, updated: TransactionUpdate) => {
+    const result = await updateTransaction(id, updated)
+    if (result?.error) console.error("Failed to update transaction:", result.error)
+  }
+
+  // ── Delete handler ──────────────────────────────────────────────────────────
+  const handleDeleteTransaction = async (id: number) => {
+    await deleteTransaction(id)
   }
 
   return (
@@ -87,7 +98,11 @@ export default function TransactionsPage() {
             Loading transactions...
           </div>
         ) : (
-          <DataTable data={filtered} />
+          <DataTable
+            data={filtered}
+            onEdit={handleEditTransaction}
+            onDelete={handleDeleteTransaction}
+          />
         )}
 
       </div>

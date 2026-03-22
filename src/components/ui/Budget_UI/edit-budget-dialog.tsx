@@ -1,19 +1,20 @@
-// src/components/ui/Budget_UI/add-budget-dialog.tsx
+// src/components/ui/Budget_UI/edit-budget-dialog.tsx
 "use client"
 
 import * as React from "react"
-import { IconPlus } from "@tabler/icons-react"
 import { Button } from "@/components/ui/button"
 import { Input }  from "@/components/ui/input"
 import { Label }  from "@/components/ui/label"
 import {
   Dialog, DialogContent, DialogDescription,
-  DialogFooter, DialogHeader, DialogTitle, DialogTrigger,
+  DialogFooter, DialogHeader, DialogTitle,
 } from "@/components/ui/dialog"
 import {
   Select, SelectContent, SelectItem,
   SelectTrigger, SelectValue,
 } from "@/components/ui/Dashboard_UI/select"
+
+import type { Budget } from "@/components/hooks/use-budgets"
 
 const CATEGORIES = [
   "Food", "Shopping", "Transport", "Utilities",
@@ -21,17 +22,24 @@ const CATEGORIES = [
 ]
 
 interface Props {
-  onAdd: (b: { category: string; amount: number }) => Promise<{ error?: string } | undefined>
+  budget:       Budget
+  open:         boolean
+  onOpenChange: (open: boolean) => void
+  onSave:       (id: string, updates: { category: string; amount: number }) => Promise<{ error?: string } | undefined>
 }
 
-export function AddBudgetDialog({ onAdd }: Props) {
-  const [open,     setOpen]     = React.useState(false)
-  const [category, setCategory] = React.useState("")
-  const [amount,   setAmount]   = React.useState("")
+export function EditBudgetDialog({ budget, open, onOpenChange, onSave }: Props) {
+  const [category, setCategory] = React.useState(budget.category)
+  const [amount,   setAmount]   = React.useState(String(budget.amount))
   const [saving,   setSaving]   = React.useState(false)
   const [errors,   setErrors]   = React.useState<Record<string, string>>({})
 
-  const reset = () => { setCategory(""); setAmount(""); setErrors({}) }
+  // Sync form when a different budget row is opened
+  React.useEffect(() => {
+    setCategory(budget.category)
+    setAmount(String(budget.amount))
+    setErrors({})
+  }, [budget])
 
   const handleSubmit = async () => {
     const e: Record<string, string> = {}
@@ -40,27 +48,22 @@ export function AddBudgetDialog({ onAdd }: Props) {
     if (Object.keys(e).length) { setErrors(e); return }
 
     setSaving(true)
-    const result = await onAdd({ category, amount: Number(amount) })
+    const result = await onSave(budget.id, { category, amount: Number(amount) })
     setSaving(false)
 
     if (result?.error) {
       setErrors({ form: result.error })
     } else {
-      reset()
-      setOpen(false)
+      onOpenChange(false)
     }
   }
 
   return (
-    <Dialog open={open} onOpenChange={(v) => { setOpen(v); if (!v) reset() }}>
-      <DialogTrigger asChild>
-        <Button size="sm"><IconPlus className="size-4 mr-1" />Set Budget</Button>
-      </DialogTrigger>
-
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[380px]">
         <DialogHeader>
-          <DialogTitle>Set Budget</DialogTitle>
-          <DialogDescription>Set a monthly spending limit for a category.</DialogDescription>
+          <DialogTitle>Edit Budget</DialogTitle>
+          <DialogDescription>Update the spending limit for this category.</DialogDescription>
         </DialogHeader>
 
         <div className="flex flex-col gap-4 py-1">
@@ -101,7 +104,7 @@ export function AddBudgetDialog({ onAdd }: Props) {
 
         <DialogFooter showCloseButton>
           <Button onClick={handleSubmit} disabled={saving}>
-            {saving ? "Saving..." : "Set Budget"}
+            {saving ? "Saving..." : "Save Changes"}
           </Button>
         </DialogFooter>
       </DialogContent>

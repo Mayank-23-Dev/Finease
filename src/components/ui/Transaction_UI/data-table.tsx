@@ -1,3 +1,4 @@
+// src/components/ui/Transaction_UI/data-table.tsx
 import * as React from "react"
 import {
   closestCenter,
@@ -87,6 +88,10 @@ import {
   TableRow,
 } from "@/components/ui/Dashboard_UI/table"
 
+import { EditTransactionDialog } from "@/components/ui/Transaction_UI/edit-transaction-dialog"
+import { DeleteTransactionDialog } from "@/components/ui/Transaction_UI/delete-transaction-dialog"
+import type { Transaction } from "@/components/hooks/use-transactions"
+
 export const schema = z.object({
   id: z.number(),
   transaction: z.string(),
@@ -98,16 +103,24 @@ export const schema = z.object({
   type: z.string(),
 })
 
+// ─── Types ────────────────────────────────────────────────────────────────────
+type TransactionUpdate = Omit<Transaction, "id" | "firebase_uid" | "created_at">
+
+interface TableCallbacks {
+  onEdit:   (id: number, updated: TransactionUpdate) => Promise<void>
+  onDelete: (id: number) => Promise<void>
+}
+
+// ─── Drag handle ──────────────────────────────────────────────────────────────
 function DragHandle({ id }: { id: number }) {
   const { attributes, listeners } = useSortable({ id })
-
   return (
     <Button
       {...attributes}
       {...listeners}
       variant="ghost"
       size="icon"
-      className="size-7 text-muted-foreground hover:bg-transparent"
+      className="size-7 text-muted-foreground hover:bg-transparent cursor-pointer"
     >
       <IconGripVertical className="size-3 text-muted-foreground" />
       <span className="sr-only">Drag to reorder</span>
@@ -115,98 +128,150 @@ function DragHandle({ id }: { id: number }) {
   )
 }
 
-const columns: ColumnDef<z.infer<typeof schema>>[] = [
-  {
-    id: "drag",
-    header: () => null,
-    cell: ({ row }) => <DragHandle id={row.original.id} />,
-  },
-  {
-    accessorKey: "transaction",
-    header: "Transaction",
-    cell: ({ row }) => <TransactionViewer item={row.original} />,
-  },
-  {
-    accessorKey: "category",
-    header: "Category",
-    cell: ({ row }) => (
-      <div className="inline-flex">
-        <Badge variant="outline">{row.original.category}</Badge>
-      </div>
-    ),
-  },
-  {
-    accessorKey: "amount",
-    header: () => <div className="text-right w-[120px]">Amount</div>,
-    cell: ({ row }) => (
-      <div className="text-right w-[120px] font-medium">
-        {"₹" + row.original.amount.toLocaleString()}
-      </div>
-    ),
-  },
-  {
-    accessorKey: "date",
-    header: () => <div className="pl-6">Date</div>,
-    cell: ({ row }) => (
-      <div className="pl-6">{row.original.date}</div>
-    ),
-  },
-  {
-    accessorKey: "type",
-    header: "Type",
-    cell: ({ row }) => {
-      const type = row.original.type
-      return (
-        <Badge
-          className={
-            type === "Debit"
-              ? "bg-red-500/10 text-red-400 border-red-500/20"
-              : "bg-green-500/10 text-green-400 border-green-500/20"
-          }
-        >
-          {type}
-        </Badge>
-      )
-    },
-  },
-  {
-    accessorKey: "method",
-    header: "Method",
-  },
-  {
-    accessorKey: "status",
-    header: "Status",
-    cell: ({ row }) => (
-      <Badge variant="outline">
-        {row.original.status === "Completed" ? (
-          <IconCircleCheckFilled className="fill-green-500" />
-        ) : (
-          <IconLoader />
-        )}
-        {row.original.status}
-      </Badge>
-    ),
-  },
-  {
-    id: "actions",
-    cell: () => (
+// ─── Actions cell (3-dot menu) ────────────────────────────────────────────────
+function ActionsCell({
+  row,
+  onEdit,
+  onDelete,
+}: {
+  row: Row<z.infer<typeof schema>>
+  onEdit:   (id: number, updated: TransactionUpdate) => Promise<void>
+  onDelete: (id: number) => Promise<void>
+}) {
+  const [editOpen,   setEditOpen]   = React.useState(false)
+  const [deleteOpen, setDeleteOpen] = React.useState(false)
+
+  // Cast schema row to Transaction shape (firebase_uid not needed for dialogs)
+  const asTransaction: Transaction = {
+    ...(row.original as Transaction),
+    firebase_uid: "",
+  }
+
+  return (
+    <>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button variant="ghost" size="icon">
+          <Button variant="ghost" size="icon" className="cursor-pointer">
             <IconDotsVertical />
           </Button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="end">
-          <DropdownMenuItem>View Details</DropdownMenuItem>
-          <DropdownMenuItem>Edit</DropdownMenuItem>
-          <DropdownMenuSeparator />
-          <DropdownMenuItem variant="destructive">Delete</DropdownMenuItem>
+        <DropdownMenuContent align="end" className="cursor-pointer">
+          <DropdownMenuItem onSelect={() => setEditOpen(true)} className="cursor-pointer">
+            Edit
+          </DropdownMenuItem>
+          <DropdownMenuItem
+            variant="destructive"
+            onSelect={() => setDeleteOpen(true)}
+            className="cursor-pointer"
+          >
+            Delete
+          </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
-    ),
-  },
-]
 
+      <EditTransactionDialog
+        transaction={asTransaction}
+        open={editOpen}
+        onOpenChange={setEditOpen}
+        onSave={onEdit}
+      />
+
+      <DeleteTransactionDialog
+        transaction={asTransaction}
+        open={deleteOpen}
+        onOpenChange={setDeleteOpen}
+        onConfirm={onDelete}
+      />
+    </>
+  )
+}
+
+// ─── Column factory (needs callbacks) ────────────────────────────────────────
+function buildColumns(callbacks: TableCallbacks): ColumnDef<z.infer<typeof schema>>[] {
+  return [
+    {
+      id: "drag",
+      header: () => null,
+      cell: ({ row }) => <DragHandle id={row.original.id} />,
+    },
+    {
+      accessorKey: "transaction",
+      header: "Transaction",
+      cell: ({ row }) => <TransactionViewer item={row.original} />,
+    },
+    {
+      accessorKey: "category",
+      header: "Category",
+      cell: ({ row }) => (
+        <div className="inline-flex">
+          <Badge variant="outline">{row.original.category}</Badge>
+        </div>
+      ),
+    },
+    {
+      accessorKey: "amount",
+      header: () => <div className="text-right w-[120px]">Amount</div>,
+      cell: ({ row }) => (
+        <div className="text-right w-[120px] font-medium">
+          {"₹" + row.original.amount.toLocaleString()}
+        </div>
+      ),
+    },
+    {
+      accessorKey: "date",
+      header: () => <div className="pl-6">Date</div>,
+      cell: ({ row }) => <div className="pl-6">{row.original.date}</div>,
+    },
+    {
+      accessorKey: "type",
+      header: "Type",
+      cell: ({ row }) => {
+        const type = row.original.type
+        return (
+          <Badge
+            className={
+              type === "Debit"
+                ? "bg-red-500/10 text-red-400 border-red-500/20"
+                : "bg-green-500/10 text-green-400 border-green-500/20"
+            }
+          >
+            {type}
+          </Badge>
+        )
+      },
+    },
+    {
+      accessorKey: "method",
+      header: "Method",
+    },
+    {
+      accessorKey: "status",
+      header: "Status",
+      cell: ({ row }) => (
+        <Badge variant="outline">
+          {row.original.status === "Completed" ? (
+            <IconCircleCheckFilled className="fill-green-500" />
+          ) : (
+            <IconLoader />
+          )}
+          {row.original.status}
+        </Badge>
+      ),
+    },
+    {
+      id: "actions",
+      cell: ({ row }) => (
+        <ActionsCell
+          row={row}
+          onEdit={callbacks.onEdit}
+          onDelete={callbacks.onDelete}
+        />
+      ),
+    },
+  ]
+}
+
+// ─── Draggable row ─────────────────────────────────────────────────────────────
 function DraggableRow({ row }: { row: Row<z.infer<typeof schema>> }) {
   const { transform, transition, setNodeRef, isDragging } = useSortable({
     id: row.original.id,
@@ -232,16 +297,21 @@ function DraggableRow({ row }: { row: Row<z.infer<typeof schema>> }) {
   )
 }
 
+// ─── DataTable ─────────────────────────────────────────────────────────────────
 export function DataTable({
   data: initialData,
   limit,
   showViewAll = false,
   viewAllHref = "/dashboard/transactions",
+  onEdit,
+  onDelete,
 }: {
   data: z.infer<typeof schema>[]
   limit?: number
   showViewAll?: boolean
   viewAllHref?: string
+  onEdit:   (id: number, updated: TransactionUpdate) => Promise<void>
+  onDelete: (id: number) => Promise<void>
 }) {
   const [data, setData] = React.useState(() =>
     limit ? initialData.slice(0, limit) : initialData
@@ -250,15 +320,13 @@ export function DataTable({
   React.useEffect(() => {
     setData(limit ? initialData.slice(0, limit) : initialData)
   }, [initialData])
-  const [rowSelection, setRowSelection] = React.useState({})
-  const [columnVisibility, setColumnVisibility] =
-    React.useState<VisibilityState>({})
-  const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([])
-  const [sorting, setSorting] = React.useState<SortingState>([])
-  const [pagination, setPagination] = React.useState({
-    pageIndex: 0,
-    pageSize: 10,
-  })
+
+  const [rowSelection,     setRowSelection]     = React.useState({})
+  const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({})
+  const [columnFilters,    setColumnFilters]    = React.useState<ColumnFiltersState>([])
+  const [sorting,          setSorting]          = React.useState<SortingState>([])
+  const [pagination,       setPagination]       = React.useState({ pageIndex: 0, pageSize: 10 })
+
   const sortableId = React.useId()
   const sensors = useSensors(
     useSensor(MouseSensor, {}),
@@ -269,6 +337,12 @@ export function DataTable({
   const dataIds = React.useMemo<UniqueIdentifier[]>(
     () => data?.map(({ id }) => id) || [],
     [data]
+  )
+
+  // Memoize columns so callbacks are stable
+  const columns = React.useMemo(
+    () => buildColumns({ onEdit, onDelete }),
+    [onEdit, onDelete]
   )
 
   const table = useReactTable({
@@ -310,11 +384,11 @@ export function DataTable({
   return (
     <div className="w-full flex flex-col gap-4">
 
-      {/* Toolbar: Customize Columns only */}
+      {/* Toolbar */}
       <div className="flex items-center justify-end px-4 lg:px-6">
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="outline" size="sm">
+            <Button variant="outline" size="sm" className="cursor-pointer">
               <IconLayoutColumns />
               <span className="hidden lg:inline">Customize Columns</span>
               <span className="lg:hidden">Columns</span>
@@ -326,17 +400,14 @@ export function DataTable({
               .getAllColumns()
               .filter(
                 (column) =>
-                  typeof column.accessorFn !== "undefined" &&
-                  column.getCanHide()
+                  typeof column.accessorFn !== "undefined" && column.getCanHide()
               )
               .map((column) => (
                 <DropdownMenuCheckboxItem
                   key={column.id}
                   className="capitalize"
                   checked={column.getIsVisible()}
-                  onCheckedChange={(value) =>
-                    column.toggleVisibility(!!value)
-                  }
+                  onCheckedChange={(value) => column.toggleVisibility(!!value)}
                 >
                   {column.id}
                 </DropdownMenuCheckboxItem>
@@ -417,7 +488,6 @@ export function DataTable({
             )}
           </div>
 
-          {/* Pagination — hidden on dashboard */}
           {!showViewAll && (
             <div className="flex w-full items-center gap-8 lg:w-fit">
               <div className="hidden items-center gap-2 lg:flex">
@@ -426,9 +496,7 @@ export function DataTable({
                 </Label>
                 <Select
                   value={`${table.getState().pagination.pageSize}`}
-                  onValueChange={(value) => {
-                    table.setPageSize(Number(value))
-                  }}
+                  onValueChange={(value) => table.setPageSize(Number(value))}
                 >
                   <SelectTrigger size="sm" className="w-20" id="rows-per-page">
                     <SelectValue placeholder={table.getState().pagination.pageSize} />
@@ -451,7 +519,7 @@ export function DataTable({
               <div className="ml-auto flex items-center gap-2 lg:ml-0">
                 <Button
                   variant="outline"
-                  className="hidden h-8 w-8 p-0 lg:flex"
+                  className="hidden h-8 w-8 p-0 lg:flex cursor-pointer"
                   onClick={() => table.setPageIndex(0)}
                   disabled={!table.getCanPreviousPage()}
                 >
@@ -460,7 +528,7 @@ export function DataTable({
                 </Button>
                 <Button
                   variant="outline"
-                  className="size-8"
+                  className="size-8 cursor-pointer"
                   size="icon"
                   onClick={() => table.previousPage()}
                   disabled={!table.getCanPreviousPage()}
@@ -470,7 +538,7 @@ export function DataTable({
                 </Button>
                 <Button
                   variant="outline"
-                  className="size-8"
+                  className="size-8 cursor-pointer"
                   size="icon"
                   onClick={() => table.nextPage()}
                   disabled={!table.getCanNextPage()}
@@ -480,7 +548,7 @@ export function DataTable({
                 </Button>
                 <Button
                   variant="outline"
-                  className="hidden size-8 lg:flex"
+                  className="hidden size-8 lg:flex cursor-pointer"
                   size="icon"
                   onClick={() => table.setPageIndex(table.getPageCount() - 1)}
                   disabled={!table.getCanNextPage()}
@@ -497,13 +565,14 @@ export function DataTable({
   )
 }
 
+// ─── Transaction Viewer (drawer) ───────────────────────────────────────────────
 function TransactionViewer({ item }: { item: z.infer<typeof schema> }) {
   const isMobile = useIsMobile()
 
   return (
     <Drawer direction={isMobile ? "bottom" : "right"}>
       <DrawerTrigger asChild>
-        <Button variant="link" className="px-0 text-left">
+        <Button variant="link" className="px-0 text-left cursor-pointer">
           {item.transaction}
         </Button>
       </DrawerTrigger>
@@ -541,9 +610,8 @@ function TransactionViewer({ item }: { item: z.infer<typeof schema> }) {
           </div>
         </div>
         <DrawerFooter>
-          <Button>Edit Transaction</Button>
           <DrawerClose asChild>
-            <Button variant="outline">Close</Button>
+            <Button className="cursor-pointer" variant="outline">Close</Button>
           </DrawerClose>
         </DrawerFooter>
       </DrawerContent>

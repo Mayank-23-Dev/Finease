@@ -29,7 +29,6 @@ export function useBudgets() {
     if (!user) return
     setLoading(true)
 
-    // Fetch budgets for this month
     const { data: budgetRows, error: bErr } = await supabase
       .from("budgets")
       .select("*")
@@ -38,7 +37,6 @@ export function useBudgets() {
 
     if (bErr) { setError(bErr.message); setLoading(false); return }
 
-    // Fetch this month's transactions to compute spent per category
     const { data: txRows, error: tErr } = await supabase
       .from("transactions")
       .select("category, amount, type")
@@ -49,7 +47,6 @@ export function useBudgets() {
 
     if (tErr) { setError(tErr.message); setLoading(false); return }
 
-    // Sum spent per category
     const spentMap: Record<string, number> = {}
     ;(txRows || []).forEach((t) => {
       spentMap[t.category] = (spentMap[t.category] ?? 0) + Number(t.amount)
@@ -81,9 +78,32 @@ export function useBudgets() {
 
     if (error) { setError(error.message); return { error: error.message } }
 
-    await fetchBudgets()   // refetch to get fresh spent values
+    await fetchBudgets()
     return { data }
   }
+
+  // ── NEW: updateBudget ───────────────────────────────────────────────────────
+  const updateBudget = async (
+    id: string,
+    updates: { category: string; amount: number }
+  ) => {
+    if (!user) return { error: "Not logged in" }
+
+    const { data, error } = await supabase
+      .from("budgets")
+      .update({ category: updates.category, amount: updates.amount })
+      .eq("id", id)
+      .eq("firebase_uid", user.uid)
+      .select()
+      .single()
+
+    if (error) { setError(error.message); return { error: error.message } }
+
+    // Refetch to recompute spent values with the possibly new category
+    await fetchBudgets()
+    return { data }
+  }
+  // ───────────────────────────────────────────────────────────────────────────
 
   const deleteBudget = async (id: string) => {
     if (!user) return
@@ -97,5 +117,14 @@ export function useBudgets() {
     else { setBudgets([]); setLoading(false) }
   }, [user])
 
-  return { budgets, loading, error, addBudget, deleteBudget, refetch: fetchBudgets, currentMonth }
+  return {
+    budgets,
+    loading,
+    error,
+    addBudget,
+    updateBudget,   // ← newly exported
+    deleteBudget,
+    refetch: fetchBudgets,
+    currentMonth,
+  }
 }

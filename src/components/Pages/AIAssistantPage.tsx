@@ -1,17 +1,22 @@
 // src/components/Pages/AIAssistantPage.tsx
 "use client"
 
-import { ChatWindow }   from "@/components/ui/AIAssistant_UI/chat-window"
-import { ChatInput }    from "@/components/ui/AIAssistant_UI/chat-input"
+import { ChatWindow }       from "@/components/ui/AIAssistant_UI/chat-window"
+import { ChatInput }        from "@/components/ui/AIAssistant_UI/chat-input"
 import { SuggestedPrompts } from "@/components/ui/AIAssistant_UI/suggested-prompts"
-import { useAIChat }    from "@/components/hooks/use-ai-chat"
-import { useTransactions } from "@/components/hooks/use-transactions"
-import { useBudgets }   from "@/components/hooks/use-budgets"
+import { useAIChat }        from "@/components/hooks/use-ai-chat"
+import { useTransactions }  from "@/components/hooks/use-transactions"
+import { useBudgets }       from "@/components/hooks/use-budgets"
 
 export default function AIAssistantPage() {
-  const { transactions } = useTransactions()
-  const { budgets }      = useBudgets()
-  const { messages, loading, sendMessage, clearChat } = useAIChat({ transactions, budgets })
+  const { transactions, addTransaction } = useTransactions()
+  const { budgets }                      = useBudgets()
+
+  const { messages, loading, sendMessage, clearChat } = useAIChat({
+    transactions,
+    budgets,
+    onAddTransaction: addTransaction,
+  })
 
   return (
     <div className="@container/main flex flex-1 flex-col h-full overflow-hidden">
@@ -22,7 +27,7 @@ export default function AIAssistantPage() {
           <div>
             <h1 className="text-2xl font-semibold tracking-tight">AI Assistant</h1>
             <p className="text-sm text-muted-foreground mt-0.5">
-              Ask anything about your finances
+              Ask anything — or just say what you spent
             </p>
           </div>
           {messages.length > 0 && (
@@ -43,7 +48,7 @@ export default function AIAssistantPage() {
                 <div className="text-4xl mb-3">💬</div>
                 <p className="text-base font-medium">How can I help you today?</p>
                 <p className="text-sm text-muted-foreground mt-1">
-                  I have access to your transactions and budgets.
+                  Ask about your finances or say <span className="italic">"I spent ₹500 on groceries"</span> to log it instantly.
                 </p>
               </div>
               <SuggestedPrompts onSelect={sendMessage} />
