@@ -83,7 +83,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       <SidebarHeader>
         <SidebarMenu>
           <SidebarMenuItem>
-            <SidebarMenuButton asChild className="p-1.5">
+            <SidebarMenuButton asChild className="p-1.5 cursor-pointer">
               <Link to="/dashboard" className="flex items-center gap-2">
                 <img
                   src={logo}
@@ -107,7 +107,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       </SidebarContent>
 
       {/* User */}
-      <SidebarFooter>
+      <SidebarFooter >
         <NavUser user={data.user} />
       </SidebarFooter>
     </Sidebar>
