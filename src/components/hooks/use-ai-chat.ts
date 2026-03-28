@@ -1,5 +1,6 @@
 // src/components/hooks/use-ai-chat.ts
 import { useState } from "react"
+import type { Dispatch, SetStateAction } from "react"
 import { format }   from "date-fns"
 import type { Transaction } from "@/components/hooks/use-transactions"
 import type { Budget }      from "@/components/hooks/use-budgets"
@@ -23,9 +24,14 @@ type TransactionDraft = {
 type TransactionInput = Omit<Transaction, "id" | "firebase_uid" | "created_at">
 
 interface Props {
-  transactions:   Transaction[]
-  budgets:        Budget[]
+  transactions:    Transaction[]
+  budgets:         Budget[]
   onAddTransaction: (t: TransactionInput) => Promise<{ error?: string; data?: Transaction } | undefined>
+  // Lifted state — passed in from ChatStoreProvider so messages survive navigation
+  messages:        Message[]
+  setMessages:     Dispatch<SetStateAction<Message[]>>
+  pendingDraft:    Partial<TransactionDraft> | null
+  setPendingDraft: Dispatch<SetStateAction<Partial<TransactionDraft> | null>>
 }
 
 // ── Valid field values ────────────────────────────────────────────────────────
@@ -273,10 +279,16 @@ async function callGroq(apiKey: string, systemPrompt: string, history: Message[]
 }
 
 // ── Hook ──────────────────────────────────────────────────────────────────────
-export function useAIChat({ transactions, budgets, onAddTransaction }: Props) {
-  const [messages,     setMessages]     = useState<Message[]>([])
-  const [loading,      setLoading]      = useState(false)
-  const [pendingDraft, setPendingDraft] = useState<Partial<TransactionDraft> | null>(null)
+export function useAIChat({
+  transactions,
+  budgets,
+  onAddTransaction,
+  messages,
+  setMessages,
+  pendingDraft,
+  setPendingDraft,
+}: Props) {
+  const [loading, setLoading] = useState(false)
 
   const addMessage = (msg: Omit<Message, "id">) =>
     setMessages((prev) => [...prev, { ...msg, id: `${msg.role}-${Date.now()}` }])

@@ -1,74 +1,107 @@
 import { useState, useEffect } from "react"
+import { Navigate, Link, useNavigate, useSearchParams } from "react-router-dom"
 import Logo from "@/components/ui/Navbar/logo"
 import { Button } from "@/components/ui/SignUp/button"
 import { ChevronLeft } from "lucide-react"
-import { Link, useNavigate, useSearchParams } from "react-router-dom"
-
 import { signInWithEmailAndPassword } from "firebase/auth"
 import { auth } from "@/firebase/firebase"
 import { signInWithGoogle } from "@/firebase/auth"
+import { useAuth } from "@/components/hooks/use-auth"
+
+const REMEMBER_KEY = "finease_remember"
 
 export function LoginPage() {
-  const navigate = useNavigate()
+  const navigate       = useNavigate()
   const [searchParams] = useSearchParams()
+  const { user, loading } = useAuth()
 
-  const [email, setEmail] = useState("")
-  const [password, setPassword] = useState("")
-  const [error, setError] = useState("")
+  const [email,      setEmail]      = useState("")
+  const [password,   setPassword]   = useState("")
+  const [rememberMe, setRememberMe] = useState(false)
+  const [error,      setError]      = useState("")
+  const [isLoading,  setIsLoading]  = useState(false)
 
-  // Autofill email from signup page
+  // ── Load saved credentials on mount ────────────────────────────────────────
   useEffect(() => {
     const emailFromURL = searchParams.get("email")
     if (emailFromURL) {
       setEmail(emailFromURL)
+      return
+    }
+
+    try {
+      const saved = localStorage.getItem(REMEMBER_KEY)
+      if (saved) {
+        const { email: savedEmail, password: savedPassword } = JSON.parse(saved)
+        if (savedEmail)    setEmail(savedEmail)
+        if (savedPassword) setPassword(savedPassword)
+        setRememberMe(true)
+      }
+    } catch {
+      localStorage.removeItem(REMEMBER_KEY)
     }
   }, [searchParams])
 
+  // ← Redirect AFTER all hooks
+  if (!loading && user) return <Navigate to="/dashboard" replace />
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
-
     setError("")
+    setIsLoading(true)
 
     try {
-      const userCredential = await signInWithEmailAndPassword(
-        auth,
-        email,
-        password
-      )
+      const userCredential = await signInWithEmailAndPassword(auth, email, password)
+      const firebaseUser = userCredential.user
+      await firebaseUser.reload()
 
-      const user = userCredential.user
-
-      await user.reload()
-
-      if (!user.emailVerified) {
+      if (!firebaseUser.emailVerified) {
         setError("Please verify your email before logging in.")
+        setIsLoading(false)
         return
       }
 
-      navigate("/dashboard")
+      if (rememberMe) {
+        localStorage.setItem(REMEMBER_KEY, JSON.stringify({ email, password }))
+      } else {
+        localStorage.removeItem(REMEMBER_KEY)
+      }
+
+      // Wait for onAuthStateChanged to confirm, then navigate
+      const unsubscribe = auth.onAuthStateChanged((user) => {
+        if (user) {
+          unsubscribe()
+          navigate("/dashboard", { replace: true })
+        }
+      })
 
     } catch (error: any) {
-
       if (error.code === "auth/user-not-found") {
         setError("No account found with this email.")
-      }
-
-      else if (error.code === "auth/wrong-password") {
+      } else if (error.code === "auth/wrong-password") {
         setError("Incorrect password.")
-      }
-
-      else {
+      } else {
         setError("Login failed. Please try again.")
       }
+      setIsLoading(false)
     }
   }
 
   const handleGoogleLogin = async () => {
+    setError("")
+    setIsLoading(true)
     try {
       await signInWithGoogle()
-      navigate("/dashboard")
+
+      const unsubscribe = auth.onAuthStateChanged((user) => {
+        if (user) {
+          unsubscribe()
+          navigate("/dashboard", { replace: true })
+        }
+      })
     } catch {
       setError("Google login failed.")
+      setIsLoading(false)
     }
   }
 
@@ -87,9 +120,7 @@ export function LoginPage() {
         <Logo className="h-6" />
 
         <div className="space-y-1">
-          <h1 className="text-2xl font-bold tracking-wide">
-            Welcome Back
-          </h1>
+          <h1 className="text-2xl font-bold tracking-wide">Welcome Back</h1>
           <p className="text-muted-foreground text-sm">
             Login to your FinEase account
           </p>
@@ -115,15 +146,31 @@ export function LoginPage() {
             onChange={(e) => setPassword(e.target.value)}
           />
 
-          {error && (
-            <p className="text-red-400 text-xs">{error}</p>
-          )}
+          {/* Remember Me */}
+          <div className="flex items-center gap-2">
+            <input
+              id="remember"
+              type="checkbox"
+              checked={rememberMe}
+              onChange={(e) => setRememberMe(e.target.checked)}
+              className="size-3.5 rounded border-border accent-primary cursor-pointer"
+            />
+            <label
+              htmlFor="remember"
+              className="text-xs text-muted-foreground cursor-pointer select-none"
+            >
+              Remember me
+            </label>
+          </div>
+
+          {error && <p className="text-red-400 text-xs">{error}</p>}
 
           <Button
             className="w-full cursor-pointer hover:bg-gray-500/10 hover:text-white"
             type="submit"
+            disabled={isLoading}
           >
-            Login
+            {isLoading ? "Logging in..." : "Login"}
           </Button>
 
         </form>
@@ -138,9 +185,10 @@ export function LoginPage() {
           className="w-full cursor-pointer hover:bg-gray-500/10 hover:text-white"
           type="button"
           onClick={handleGoogleLogin}
+          disabled={isLoading}
         >
           <GoogleIcon className="mr-2 h-4 w-4" />
-          Continue with Google
+          {isLoading ? "Please wait..." : "Continue with Google"}
         </Button>
 
         <p className="text-muted-foreground text-xs text-center">

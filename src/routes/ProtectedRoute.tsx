@@ -7,10 +7,9 @@ export default function ProtectedRoute({
 }: {
   children: React.ReactNode
 }) {
-  const { user, loading } = useAuth()
+  const { user, loading, loggingOut } = useAuth()
 
-  // Show loader while Firebase checks authentication
-  if (loading) {
+  if (loading || loggingOut) {
     return (
       <div className="flex h-screen w-full items-center justify-center">
         <MorphingSquare message="Checking authentication..." />
@@ -18,11 +17,9 @@ export default function ProtectedRoute({
     )
   }
 
-  // Redirect if user not logged in
   if (!user) {
-    return <Navigate to="/login" replace />
+    return <Navigate to="/" replace />  // ← changed from /login to /
   }
 
-  // Allow access if logged in
   return <>{children}</>
 }

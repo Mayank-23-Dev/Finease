@@ -1,4 +1,5 @@
 import { useNavigate } from "react-router-dom"
+import { useAuth } from "@/components/hooks/use-auth"
 import {
   IconCreditCard,
   IconDotsVertical,
@@ -41,6 +42,8 @@ export function NavUser({
 }) {
   const { isMobile } = useSidebar()
   const navigate = useNavigate()
+  const { logOut } = useAuth()
+
   return (
     <SidebarMenu>
       <SidebarMenuItem>
@@ -127,7 +130,10 @@ export function NavUser({
             <DropdownMenuSeparator />
 
             <DropdownMenuItem
-              onClick={() => navigate("/")}
+              onClick={async () => {
+                await logOut()
+                navigate("/", { replace: true })
+              }}
               className="cursor-pointer hover:bg-red-500/10 hover:text-red-400"
             >
               <IconLogout />

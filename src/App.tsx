@@ -14,6 +14,7 @@ import BudgetPage from "@/components/Pages/BudgetPage";
 import ReportsPage from "@/components/Pages/ReportsPage";
 import AIAssistantPage from "@/components/Pages/AIAssistantPage";
 import Features from "@/components/ui/Footer_pages/feature";
+import { ChatStoreProvider } from "@/components/hooks/use-chat-store"
 
 export default function App() {
   return (
@@ -38,21 +39,23 @@ export default function App() {
           <Route path="/signup" element={<AuthPage />} />
           <Route path="/verify" element={<VerifyEmail />} />
 
-          {/* Dashboard Layout */}
+          {/* Dashboard Layout — wrapped in ChatStoreProvider so chat persists across all dashboard pages */}
           <Route
             path="/dashboard"
             element={
               <ProtectedRoute>
-                <DashboardPage />
+                <ChatStoreProvider>
+                  <DashboardPage />
+                </ChatStoreProvider>
               </ProtectedRoute>
             }
           >
-            <Route index             element={<DashboardHome />}     />
-            <Route path="transactions" element={<TransactionsPage />} />
-            <Route path="budget"       element={<BudgetPage />}       />
-            <Route path="reports"      element={<ReportsPage />}      />
-            <Route path="ai-assistant" element={<AIAssistantPage />}  />
-            <Route path="settings"     element={<SettingsPage />}     />
+            <Route index               element={<DashboardHome />}     />
+            <Route path="transactions" element={<TransactionsPage />}  />
+            <Route path="budget"       element={<BudgetPage />}        />
+            <Route path="reports"      element={<ReportsPage />}       />
+            <Route path="ai-assistant" element={<AIAssistantPage />}   />
+            <Route path="settings"     element={<SettingsPage />}      />
           </Route>
 
           <Route path="/features" element={<Features />} />

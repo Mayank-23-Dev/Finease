@@ -136,9 +136,13 @@ function parseInline(text: string): React.ReactNode {
 export function ChatWindow({
   messages,
   loading,
+  userAvatar,
+  userInitials = "U",
 }: {
-  messages: Message[]
-  loading: boolean
+  messages:      Message[]
+  loading:       boolean
+  userAvatar?:   string | null
+  userInitials?: string
 }) {
   const bottomRef = React.useRef<HTMLDivElement>(null)
 
@@ -176,8 +180,11 @@ export function ChatWindow({
 
           {/* User avatar */}
           {m.role === "user" && (
-            <div className="size-7 rounded-full bg-secondary flex items-center justify-center text-xs font-medium shrink-0 mt-0.5">
-              U
+            <div className="size-7 rounded-full bg-secondary flex items-center justify-center text-xs font-medium shrink-0 mt-0.5 overflow-hidden">
+              {userAvatar
+                ? <img src={userAvatar} alt="avatar" className="size-full object-cover" />
+                : userInitials
+              }
             </div>
           )}
         </div>

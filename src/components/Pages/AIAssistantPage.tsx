@@ -5,18 +5,39 @@ import { ChatWindow }       from "@/components/ui/AIAssistant_UI/chat-window"
 import { ChatInput }        from "@/components/ui/AIAssistant_UI/chat-input"
 import { SuggestedPrompts } from "@/components/ui/AIAssistant_UI/suggested-prompts"
 import { useAIChat }        from "@/components/hooks/use-ai-chat"
+import { useChatStore }     from "@/components/hooks/use-chat-store"
 import { useTransactions }  from "@/components/hooks/use-transactions"
 import { useBudgets }       from "@/components/hooks/use-budgets"
+import { useAuth }          from "@/components/hooks/use-auth"
+import type { Message }           from "@/components/hooks/use-ai-chat"
+import type { Dispatch, SetStateAction } from "react"
 
 export default function AIAssistantPage() {
   const { transactions, addTransaction } = useTransactions()
   const { budgets }                      = useBudgets()
+  const { user }                         = useAuth()
 
-  const { messages, loading, sendMessage, clearChat } = useAIChat({
+  // ── Persistent chat state (survives navigation) ───────────────────────────
+  const { messages, setMessages, pendingDraft, setPendingDraft } = useChatStore()
+
+  const { loading, sendMessage, clearChat } = useAIChat({
     transactions,
     budgets,
     onAddTransaction: addTransaction,
+    messages,
+    setMessages,
+    pendingDraft:    pendingDraft as never,
+    setPendingDraft: setPendingDraft as never,
   })
+
+  // ── User avatar ───────────────────────────────────────────────────────────
+  const userAvatar   = user?.photoURL ?? null
+  const userInitials = (user?.displayName ?? user?.email ?? "U")
+    .split(" ")
+    .map((w) => w[0])
+    .slice(0, 2)
+    .join("")
+    .toUpperCase()
 
   return (
     <div className="@container/main flex flex-1 flex-col h-full overflow-hidden">
@@ -48,13 +69,19 @@ export default function AIAssistantPage() {
                 <div className="text-4xl mb-3">💬</div>
                 <p className="text-base font-medium">How can I help you today?</p>
                 <p className="text-sm text-muted-foreground mt-1">
-                  Ask about your finances or say <span className="italic">"I spent ₹500 on groceries"</span> to log it instantly.
+                  Ask about your finances or say{" "}
+                  <span className="italic">"I spent ₹500 on groceries"</span> to log it instantly.
                 </p>
               </div>
               <SuggestedPrompts onSelect={sendMessage} />
             </div>
           ) : (
-            <ChatWindow messages={messages} loading={loading} />
+            <ChatWindow
+              messages={messages}
+              loading={loading}
+              userAvatar={userAvatar}
+              userInitials={userInitials}
+            />
           )}
 
           {/* Input */}
