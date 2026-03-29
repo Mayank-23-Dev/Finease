@@ -9,18 +9,19 @@ import { useChatStore }     from "@/components/hooks/use-chat-store"
 import { useTransactions }  from "@/components/hooks/use-transactions"
 import { useBudgets }       from "@/components/hooks/use-budgets"
 import { useAuth }          from "@/components/hooks/use-auth"
-import type { Message }           from "@/components/hooks/use-ai-chat"
-import type { Dispatch, SetStateAction } from "react"
 
 export default function AIAssistantPage() {
   const { transactions, addTransaction } = useTransactions()
   const { budgets }                      = useBudgets()
   const { user }                         = useAuth()
 
-  // ── Persistent chat state (survives navigation) ───────────────────────────
-  const { messages, setMessages, pendingDraft, setPendingDraft } = useChatStore()
+  const {
+    messages, setMessages,
+    pendingDraft, setPendingDraft,
+    guidedStep, setGuidedStep,
+  } = useChatStore()
 
-  const { loading, sendMessage, clearChat } = useAIChat({
+  const { loading, sendMessage, clearChat, startGuidedFlow, cancelGuidedFlow } = useAIChat({
     transactions,
     budgets,
     onAddTransaction: addTransaction,
@@ -28,16 +29,13 @@ export default function AIAssistantPage() {
     setMessages,
     pendingDraft:    pendingDraft as never,
     setPendingDraft: setPendingDraft as never,
+    guidedStep,
+    setGuidedStep,
   })
 
-  // ── User avatar ───────────────────────────────────────────────────────────
   const userAvatar   = user?.photoURL ?? null
   const userInitials = (user?.displayName ?? user?.email ?? "U")
-    .split(" ")
-    .map((w) => w[0])
-    .slice(0, 2)
-    .join("")
-    .toUpperCase()
+    .split(" ").map((w) => w[0]).slice(0, 2).join("").toUpperCase()
 
   return (
     <div className="@container/main flex flex-1 flex-col h-full overflow-hidden">
@@ -86,7 +84,13 @@ export default function AIAssistantPage() {
 
           {/* Input */}
           <div className="px-4 lg:px-6 py-3 border-t shrink-0">
-            <ChatInput onSend={sendMessage} loading={loading} />
+            <ChatInput
+              onSend={sendMessage}
+              loading={loading}
+              guidedStep={guidedStep}
+              onStartGuided={startGuidedFlow}
+              onCancelGuided={cancelGuidedFlow}
+            />
           </div>
         </div>
 

@@ -9,6 +9,8 @@ import {
   updateProfile,
   updatePassword,
   deleteUser,
+  reauthenticateWithCredential,
+  EmailAuthProvider,
 } from "firebase/auth"
 
 
@@ -56,6 +58,18 @@ export const updateUserName = async (name: string) => {
   await updateProfile(user, {
     displayName: name
   })
+
+}
+
+
+// Re-authenticate with current password (required before sensitive operations)
+export const reauthenticate = async (currentPassword: string) => {
+
+  const user = auth.currentUser
+  if (!user || !user.email) throw new Error("User not logged in")
+
+  const credential = EmailAuthProvider.credential(user.email, currentPassword)
+  await reauthenticateWithCredential(user, credential)
 
 }
 
