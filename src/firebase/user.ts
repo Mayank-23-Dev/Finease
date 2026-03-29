@@ -38,6 +38,7 @@ export type UserProfile = {
   financial_experience: string | null
   dob:                  string | null
   created_at:           string
+  profile_pic:          string | null
 }
 
 /** Fetch the Supabase profile for the current Firebase user */

@@ -1,141 +1,252 @@
-// src/components/ui/Settings_UI/profile-panel.tsx
 "use client"
 
 import * as React from "react"
-import { Camera, Sparkles, User, Check } from "lucide-react"
+import { Camera, Sparkles, User, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { Input }  from "@/components/ui/input"
+import { Input } from "@/components/ui/input"
 import { Card, FieldRow, Toast, type StatusMsg } from "./settings-ui"
 
 interface ProfilePanelProps {
-  displayName:    string
-  email:          string
-  avatarPreview:  string | null
-  initials:       string
-  avatarFile:     File | null
-  avatarSaving:   boolean
-  avatarMsg:      StatusMsg
-  avatarInputRef: React.RefObject<HTMLInputElement | null>
-  onAvatarPick:   (e: React.ChangeEvent<HTMLInputElement>) => void
-  onSaveAvatar:   () => void
-  nameSaving:     boolean
-  nameMsg:        StatusMsg
-  setDisplayName: (v: string) => void
-  setNameMsg:     (v: StatusMsg) => void
-  onSaveName:     () => void
+    displayName: string
+    email: string
+    avatarPreview: string | null
+    initials: string
+    avatarFile: File | null
+    avatarSaving: boolean
+    avatarLoading: boolean
+    avatarMsg: StatusMsg
+    avatarInputRef: React.RefObject<HTMLInputElement | null>
+    onAvatarPick: (e: React.ChangeEvent<HTMLInputElement>) => void
+    onSaveAvatar: () => void
+    onCancelAvatar: () => void
+    onRemoveAvatar: () => void
+    nameSaving: boolean
+    nameMsg: StatusMsg
+    setDisplayName: (v: string) => void
+    setNameMsg: (v: StatusMsg) => void
+    onSaveName: () => void
 }
 
 export function ProfilePanel({
-  displayName, email, avatarPreview, initials,
-  avatarFile, avatarSaving, avatarMsg, avatarInputRef,
-  onAvatarPick, onSaveAvatar,
-  nameSaving, nameMsg, setDisplayName, setNameMsg, onSaveName,
+    displayName, email, avatarPreview, initials,
+    avatarFile, avatarSaving, avatarLoading, avatarMsg,
+    avatarInputRef, onAvatarPick, onSaveAvatar, onCancelAvatar,
+    onRemoveAvatar,
+    nameSaving, nameMsg, setDisplayName, setNameMsg, onSaveName,
 }: ProfilePanelProps) {
-  return (
-    <div className="space-y-4">
 
-      {/* ── Avatar hero card ──────────────────────────────────────────── */}
-      <Card>
-        {/* Banner — subtle grid, no color */}
-        <div className="relative h-24 bg-white/[0.02] overflow-hidden">
-          <svg className="absolute inset-0 w-full h-full opacity-[0.06]" xmlns="http://www.w3.org/2000/svg">
-            <defs>
-              <pattern id="pg" width="20" height="20" patternUnits="userSpaceOnUse">
-                <path d="M 20 0 L 0 0 0 20" fill="none" stroke="white" strokeWidth="0.5"/>
-              </pattern>
-            </defs>
-            <rect width="100%" height="100%" fill="url(#pg)" />
-          </svg>
+    // 🔥 Toast animation state
+    const [showToast, setShowToast] = React.useState(false)
+
+    React.useEffect(() => {
+        if (avatarMsg) {
+            setShowToast(true)
+
+            const t1 = setTimeout(() => {
+                setShowToast(false)
+            }, 1800)
+
+            return () => clearTimeout(t1)
+        }
+    }, [avatarMsg])
+
+    return (
+        <div className="space-y-4">
+
+            {/* ── Avatar Card ── */}
+            <Card className="relative overflow-hidden">
+
+                {/* Banner */}
+                <div className="relative h-20 bg-[#111111] overflow-hidden rounded-t-xl">
+                    <svg className="absolute inset-0 w-full h-full opacity-[0.12]">
+                        <defs>
+                            <pattern id="pg" width="20" height="20" patternUnits="userSpaceOnUse">
+                                <path d="M 20 0 L 0 0 0 20" fill="none" stroke="white" strokeWidth="0.6" />
+                            </pattern>
+                        </defs>
+                        <rect width="100%" height="100%" fill="url(#pg)" />
+                    </svg>
+                </div>
+
+                {/* 🔥 FIXED TOAST (animate in + out) */}
+                {avatarMsg && (
+                    <div
+                        className={`
+                        absolute top-4 left-1/2 -translate-x-1/2 z-50
+                        transition-all duration-300
+                        ${showToast
+                                ? "animate-in fade-in slide-in-from-top-2"
+                                : "animate-out fade-out slide-out-to-top-2"}
+                    `}
+                    >
+                        <Toast msg={avatarMsg} />
+                    </div>
+                )}
+
+                {/* Content */}
+                <div className="px-6 py-5 flex items-center gap-5">
+
+                    {/* Avatar */}
+                    <div className="relative group shrink-0">
+                        <div className="size-[78px] rounded-2xl overflow-hidden
+              ring-2 ring-white/[0.10] ring-offset-2 ring-offset-[#111]
+              shadow-md">
+
+                            {avatarLoading ? (
+                                <div className="size-full bg-white/[0.06] animate-pulse flex items-center justify-center">
+                                    <Camera className="size-5 text-white/20" />
+                                </div>
+                            ) : avatarPreview ? (
+                                <img src={avatarPreview} className="size-full object-cover" />
+                            ) : (
+                                <div className="size-full bg-[#1c1c1c] flex items-center justify-center text-2xl font-black text-white/40">
+                                    {initials}
+                                </div>
+                            )}
+                        </div>
+
+                        <span className="absolute -bottom-1 -right-1 size-3.5 rounded-full bg-emerald-500 border-2 border-[#111]" />
+
+                        {!avatarSaving && !avatarLoading && (
+                            <button
+                                onClick={() => avatarInputRef.current?.click()}
+                                className="absolute inset-0 rounded-2xl bg-black/60 opacity-0 group-hover:opacity-100
+                transition flex items-center justify-center cursor-pointer"
+                            >
+                                <Camera className="size-5 text-white" />
+                            </button>
+                        )}
+                    </div>
+
+                    <input
+                        ref={avatarInputRef}
+                        type="file"
+                        accept="image/jpeg,image/png,image/gif,image/webp"
+                        className="hidden cursor-pointer"
+                        onChange={onAvatarPick}
+                    />
+
+                    {/* Info */}
+                    <div className="flex flex-col justify-center min-w-0 flex-1 py-1">
+
+                        <p className="text-[20px] md:text-[22px] font-extrabold tracking-tight leading-snug truncate
+                        bg-gradient-to-r from-white via-white/95 to-white/70 bg-clip-text text-transparent
+                        drop-shadow-[0_2px_6px_rgba(0,0,0,0.6)]">
+                            {displayName || "Your Name"}
+                        </p>
+
+                        <div className="flex items-center gap-2 mt-1">
+                            <span className="text-[13px] text-white/60 truncate font-medium">
+                                {email}
+                            </span>
+                            <span className="size-1.5 rounded-full bg-emerald-400 shadow-[0_0_6px_rgba(16,185,129,0.6)]" />
+                            <span className="text-[12px] text-emerald-400 font-semibold">
+                                Verified
+                            </span>
+                        </div>
+
+                        {/* Buttons */}
+                        <div className="flex gap-2 mt-3 flex-wrap items-center">
+                            {!avatarFile && !avatarSaving && (
+                                <>
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={() => avatarInputRef.current?.click()}
+                                        className="h-8 px-4 rounded-lg text-[12.5px] font-medium
+                                        bg-white/[0.04] border border-white/[0.12]
+                                        text-white/80 hover:bg-white/[0.10] hover:border-white/[0.25]
+                                        hover:text-white active:scale-[0.97] transition-all duration-150 shadow-sm cursor-pointer"
+                                    >
+                                        Change photo
+                                    </Button>
+
+                                    {avatarPreview && (
+                                        <Button
+                                            variant="outline"
+                                            size="sm"
+                                            onClick={onRemoveAvatar}
+                                            className="h-8 px-4 rounded-lg text-[12.5px] font-medium
+                                            bg-red-500/[0.08] border border-red-500/[0.25]
+                                            text-red-400 hover:bg-red-500/[0.18]
+                                            hover:border-red-500/[0.4] hover:text-red-300
+                                            active:scale-[0.97] transition-all duration-150 shadow-sm cursor-pointer"
+                                        >
+                                            Remove
+                                        </Button>
+                                    )}
+                                </>
+                            )}
+
+                            {avatarFile && (
+                                <div className="flex gap-2 items-center">
+                                    <Button
+                                        size="sm"
+                                        onClick={onSaveAvatar}
+                                        disabled={avatarSaving}
+                                        className="h-8 px-4 rounded-lg text-[12.5px] font-semibold
+                                        bg-white text-black shadow-sm hover:bg-white/90
+                                        active:scale-[0.97] transition-all duration-150
+                                        disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer"
+                                    >
+                                        {avatarSaving ? "Uploading..." : "Save photo"}
+                                    </Button>
+
+                                    {!avatarSaving && (
+                                        <Button
+                                            variant="outline"
+                                            size="sm"
+                                            onClick={onCancelAvatar}
+                                            className="h-8 px-4 rounded-lg text-[12.5px] font-medium
+                                            bg-white/[0.04] border border-white/[0.12]
+                                            text-white/70 hover:bg-white/[0.08]
+                                            hover:text-white active:scale-[0.97]
+                                            transition-all duration-150 cursor-pointer"
+                                        >
+                                            Cancel
+                                        </Button>
+                                    )}
+                                </div>
+                            )}
+                        </div>
+
+                        <p className="text-[11px] text-white/30 mt-2 font-medium tracking-wide">
+                            JPG · PNG · GIF · WebP · Max 2 MB
+                        </p>
+                    </div>
+                </div>
+            </Card>
+
+            {/* ── Name + Email Card ── */}
+            <Card>
+                <FieldRow icon={Sparkles} label="Display Name" description="Shown across the entire app. 32 characters max.">
+                    <div className="space-y-2">
+                        <div className="flex gap-2">
+                            <Input
+                                value={displayName}
+                                onChange={(e) => {
+                                    setDisplayName(e.target.value)
+                                    setNameMsg(null)
+                                }}
+                                maxLength={32}
+                                className="h-10 text-[14px] font-semibold bg-white/[0.05] border-white/[0.10] text-white/90 rounded-lg"
+                            />
+                            <Button size="sm" onClick={onSaveName} disabled={nameSaving || !displayName.trim()}
+                                className="h-10 px-5 text-[13px] font-bold rounded-lg bg-white text-black">
+                                {nameSaving ? "Saving..." : "Save"}
+                            </Button>
+                        </div>
+
+                        <Toast msg={nameMsg} />
+                    </div>
+                </FieldRow>
+
+                <div className="h-px bg-white/[0.06] mx-6" />
+
+                <FieldRow icon={User} label="Email Address" description="Your login email.">
+                    <Input value={email} disabled className="h-10 text-[14px] font-medium opacity-30 bg-white/[0.02] rounded-lg" />
+                </FieldRow>
+            </Card>
         </div>
-
-        <div className="px-6 pb-6 -mt-10 flex flex-col sm:flex-row items-start sm:items-end gap-4">
-          {/* Avatar */}
-          <div className="relative group shrink-0">
-            <div className="size-20 rounded-2xl overflow-hidden border-4 border-[#0a0a0a] shadow-2xl">
-              {avatarPreview
-                ? <img src={avatarPreview} alt="" className="size-full object-cover" />
-                : <div className="size-full bg-white/[0.08] flex items-center justify-center
-                    text-2xl font-black text-white/60">
-                    {initials}
-                  </div>
-              }
-            </div>
-            <button onClick={() => avatarInputRef.current?.click()}
-              className="absolute inset-0 rounded-2xl bg-black/70 opacity-0 group-hover:opacity-100
-                transition-all flex items-center justify-center cursor-pointer backdrop-blur-sm">
-              <Camera className="size-5 text-white" />
-            </button>
-            {avatarFile && (
-              <div className="absolute -inset-1 rounded-[18px] border-2 border-white/40 animate-pulse" />
-            )}
-          </div>
-
-          <input ref={avatarInputRef} type="file" accept="image/*"
-            className="hidden" onChange={onAvatarPick} />
-
-          <div className="flex flex-col gap-2 sm:pb-1 flex-1">
-            <div>
-              <p className="text-base font-bold text-white leading-tight">{displayName || "Your Name"}</p>
-              <p className="text-xs text-white/35 flex items-center gap-1.5 mt-0.5">
-                <span className="size-1.5 rounded-full bg-white/40 inline-block" />
-                {email}
-              </p>
-            </div>
-            <div className="flex flex-wrap gap-2 items-center">
-              <Button variant="outline" size="sm"
-                onClick={() => avatarInputRef.current?.click()}
-                className="cursor-pointer bg-white/[0.04] border-white/[0.08] hover:bg-white/[0.08]
-                  text-white/60 gap-1.5 h-8 text-xs">
-                <Camera className="size-3" /> Change photo
-              </Button>
-              {avatarFile && (
-                <Button size="sm" onClick={onSaveAvatar} disabled={avatarSaving}
-                  className="cursor-pointer gap-1.5 h-8 text-xs bg-white text-black
-                    hover:bg-white/90 border-0 font-semibold">
-                  {avatarSaving
-                    ? <><span className="size-3 rounded-full border-2 border-black/20 border-t-black animate-spin" /> Uploading…</>
-                    : <><Check className="size-3" /> Save photo</>
-                  }
-                </Button>
-              )}
-              <Toast msg={avatarMsg} />
-            </div>
-            <p className="text-[10px] text-white/20">JPG, PNG or GIF · Max 2 MB</p>
-          </div>
-        </div>
-      </Card>
-
-      {/* ── Name + email fields ────────────────────────────────────────── */}
-      <Card>
-        <FieldRow icon={Sparkles} label="Display Name" description="Shown across the entire app. 32 characters max.">
-          <div className="space-y-1.5">
-            <div className="flex gap-2">
-              <Input value={displayName}
-                onChange={(e) => { setDisplayName(e.target.value); setNameMsg(null) }}
-                placeholder="Your name" maxLength={32}
-                className="h-10 bg-white/[0.04] border-white/[0.08] hover:border-white/20
-                  focus:border-white/30 text-white placeholder:text-white/20 transition-all"
-              />
-              <Button size="sm" onClick={onSaveName}
-                disabled={nameSaving || !displayName.trim()}
-                className="cursor-pointer h-10 px-4 shrink-0 bg-white text-black
-                  hover:bg-white/90 border-0 font-semibold text-sm">
-                {nameSaving
-                  ? <span className="size-4 rounded-full border-2 border-black/20 border-t-black animate-spin" />
-                  : "Save"
-                }
-              </Button>
-            </div>
-            <Toast msg={nameMsg} />
-          </div>
-        </FieldRow>
-
-        <FieldRow icon={User} label="Email Address" description="Your login email. Contact support to change it.">
-          <Input value={email} disabled
-            className="h-10 opacity-25 cursor-not-allowed bg-white/[0.02] border-white/[0.05] text-white" />
-        </FieldRow>
-      </Card>
-
-    </div>
-  )
+    )
 }

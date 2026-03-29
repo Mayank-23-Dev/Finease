@@ -111,17 +111,24 @@ export function NavUser({
             <DropdownMenuSeparator />
 
             <DropdownMenuGroup>
-              <DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => navigate("settings")}
+                className="cursor-pointer"
+              >
                 <IconUserCircle />
                 Account
               </DropdownMenuItem>
 
-              <DropdownMenuItem>
+              {/* <DropdownMenuItem>
                 <IconCreditCard />
-                Billing
-              </DropdownMenuItem>
 
-              <DropdownMenuItem>
+                Billing
+              </DropdownMenuItem> */}
+
+              <DropdownMenuItem
+                onClick={() => navigate("notifications")}
+                className="cursor-pointer"
+              >
                 <IconNotification />
                 Notifications
               </DropdownMenuItem>

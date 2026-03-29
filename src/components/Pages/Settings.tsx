@@ -18,7 +18,6 @@ export default function SettingsPage() {
   const activeNav = NAV_ITEMS.find((n) => n.id === activeTab)!
 
   return (
-    // ✅ Row layout (sidebar + content side-by-side)
     <div className="flex w-full bg-[#0a0a0a] text-white">
 
       {/* Sidebar */}
@@ -32,23 +31,27 @@ export default function SettingsPage() {
       />
 
       {/* Main Content */}
-      <main className="flex-1 flex flex-col gap-4 py-4 md:gap-6 md:py-6">
-        <div className="w-full max-w-2xl mx-auto px-5 sm:px-8 py-10 space-y-5">
+      <main className="flex-1 flex flex-col gap-6 py-6">
+
+        {/* 🔥 WIDER CONTAINER */}
+        <div className="w-full max-w-5xl xl:max-w-6xl mx-auto px-6 sm:px-10 space-y-6">
 
           {/* Heading */}
           <div className="flex items-center gap-4 mb-2">
-            <div className="p-2.5 rounded-xl bg-white/[0.06] border border-white/[0.06]">
+            <div className="p-3 rounded-xl bg-white/[0.06] border border-white/[0.06]">
               <activeNav.icon className="size-5 text-white/60" />
             </div>
+
             <div>
-              <h1 className="text-xl font-bold tracking-tight text-white">
+              <h1 className="text-2xl font-semibold tracking-tight text-white">
                 {activeNav.label}
               </h1>
-              <p className="text-sm text-white/30 mt-0.5">
-                {activeTab === "profile"   && "Your identity across the platform."}
+
+              <p className="text-sm text-white/40 mt-1">
+                {activeTab === "profile" && "Your identity across the platform."}
                 {activeTab === "financial" && "Keep your financial data accurate for better insights."}
-                {activeTab === "security"  && "Protect your account with a strong password."}
-                {activeTab === "danger"    && "Destructive actions — proceed with extreme caution."}
+                {activeTab === "security" && "Protect your account with a strong password."}
+                {activeTab === "danger" && "Destructive actions — proceed with extreme caution."}
               </p>
             </div>
           </div>
@@ -62,10 +65,13 @@ export default function SettingsPage() {
               initials={s.initials}
               avatarFile={s.avatarFile}
               avatarSaving={s.avatarSaving}
+              avatarLoading={s.avatarLoading}
               avatarMsg={s.avatarMsg}
               avatarInputRef={s.avatarInputRef}
               onAvatarPick={s.handleAvatarPick}
               onSaveAvatar={s.handleSaveAvatar}
+              onCancelAvatar={s.handleCancelAvatar}
+              onRemoveAvatar={s.handleRemoveAvatar}
               nameSaving={s.nameSaving}
               nameMsg={s.nameMsg}
               setDisplayName={s.setDisplayName}
