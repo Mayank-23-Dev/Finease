@@ -103,7 +103,7 @@ function PlaceholderLines() {
 /* ============================= */
 
 function BudgetProgress({
-  limit = 160000,
+  limit = 99999,
 }: {
   limit?: number
 }) {

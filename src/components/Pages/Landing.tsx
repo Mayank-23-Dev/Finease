@@ -17,8 +17,6 @@ export default function Page() {
   const [isLoggedIn,  setIsLoggedIn]  = useState(false)
 
   useEffect(() => {
-    // Subscribe directly — guarantees we wait for Firebase to fully restore
-    // the persisted session from IndexedDB before making any routing decision
     const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
       setIsLoggedIn(!!firebaseUser)
       setAuthChecked(true)
@@ -26,10 +24,7 @@ export default function Page() {
     return () => unsubscribe()
   }, [])
 
-  // Render nothing until Firebase has confirmed the auth state
   if (!authChecked) return null
-
-  // Logged in → dashboard
   if (isLoggedIn) return <Navigate to="/dashboard" replace />
 
   return (
@@ -52,23 +47,18 @@ export default function Page() {
           </div>
         </section>
 
-        {/* TESTIMONIALS */}
-        {/* <section id="testimonials" className="py-10">
-          <CircularTestimonialsDemo />
-        </section> */}
-
         {/* GET STARTED */}
-        <section id="getstarted" className="py-10">
+        <section id="getstarted" className="py-1">
           <GetStarted />
         </section>
 
-        {/* FAQS */}
-        <section id="FAQS" className="py-10">
+        {/* FAQS — FIX: py-10 → pt-10 pb-4 so footer sits closer */}
+        <section id="FAQS" className="pt-8 pb-8">
           <FaqsSection />
         </section>
 
-        {/* ABOUT US */}
-        <section id="about" className="py-10">
+        {/* ABOUT US — FIX: py-10 → pt-4 so gap between FAQs and footer is tight */}
+        <section id="about" className="pt-4 pb-10">
           <Footer />
         </section>
 
