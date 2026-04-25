@@ -12,28 +12,25 @@ const Logo = ({
   size = "md",
 }: LogoProps) => {
   const sizeClasses = {
-    sm: "h-6",
-    md: "h-10",
+    sm: "h-5",
+    md: "h-8",   // FIX: was h-10, now h-8 (~2px smaller feel)
     lg: "h-14",
   };
 
   const textSizeClasses = {
-    sm: "text-lg",
-    md: "text-2xl",
+    sm: "text-base",
+    md: "text-xl",  // FIX: was text-2xl, matches smaller icon
     lg: "text-3xl",
   };
 
   return (
+    // FIX: className is now applied to the wrapper so it can override sizing
     <div className={`flex items-center gap-1.5 ${className}`}>
-
-      {/* Logo Image */}
       <img
         src={logo}
         alt="Finease Logo"
         className={`${sizeClasses[size]} w-auto object-contain dark:invert`}
       />
-
-      {/* Text */}
       {showText && (
         <span
           className={`font-bold tracking-[-0.03em] text-black dark:text-white ${textSizeClasses[size]}`}

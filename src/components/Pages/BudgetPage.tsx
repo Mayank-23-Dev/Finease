@@ -5,9 +5,18 @@ import { useBudgets } from "@/components/hooks/use-budgets"
 import { BudgetOverview }  from "@/components/ui/Budget_UI/budget-overview"
 import { BudgetList }      from "@/components/ui/Budget_UI/budget-list"
 import { AddBudgetDialog } from "@/components/ui/Budget_UI/add-budget-dialog"
+import { MonthPicker }     from "@/components/ui/Reports_UI/month-picker" // ← ADD
 
 export default function BudgetPage() {
-  const { budgets, loading, addBudget, updateBudget, deleteBudget, currentMonth } = useBudgets()
+  const {
+    budgets,
+    loading,
+    addBudget,
+    updateBudget,
+    deleteBudget,
+    selectedMonth,    // ← was currentMonth
+    setSelectedMonth, // ← ADD
+  } = useBudgets()
 
   return (
     <div className="@container/main flex flex-1 flex-col gap-2">
@@ -20,10 +29,15 @@ export default function BudgetPage() {
             <p className="text-sm text-muted-foreground mt-0.5">
               {loading
                 ? "Loading..."
-                : `${budgets.length} budget${budgets.length !== 1 ? "s" : ""} for ${currentMonth}`}
+                : `${budgets.length} budget${budgets.length !== 1 ? "s" : ""} for ${selectedMonth}`}
             </p>
           </div>
-          <AddBudgetDialog onAdd={addBudget} />
+
+          {/* ← ADD MonthPicker, keep AddBudgetDialog */}
+          <div className="flex items-center gap-2">
+            <MonthPicker value={selectedMonth} onChange={setSelectedMonth} />
+            <AddBudgetDialog onAdd={addBudget} />
+          </div>
         </div>
 
         {loading ? (

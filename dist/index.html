@@ -2,18 +2,27 @@
 <html lang="en" class="dark">
   <head>
     <meta charset="UTF-8" />
-    <!-- White favicon -->
-    <link rel="icon" type="image/png" href="/assets/Logo_white-BvpnNU_Z.png" class="white-icon"/>
+
+    <!-- ✅ Correct favicon (from public folder) -->
+    <link rel="icon" type="image/png" href="/logo-192.png" />
+    <link rel="apple-touch-icon" href="/logo-192.png" />
+
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>FinEase</title>
-    <style>
-      .white-icon {
-        filter: brightness(0) invert(1);
-      }
-    </style>
-    <script type="module" crossorigin src="/assets/index-cRPjDiHr.js"></script>
-    <link rel="stylesheet" crossorigin href="/assets/index-CXA2u0uF.css">
+
+    <!-- ✅ PWA Manifest -->
+    <link rel="manifest" href="/manifest.json" />
+
+    <!-- ✅ Theme -->
+    <meta name="theme-color" content="#170F1F" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black" />
+    <meta name="apple-mobile-web-app-title" content="FinEase" />
+    <script type="module" crossorigin src="/assets/index-3IXx_Nop.js"></script>
+    <link rel="stylesheet" crossorigin href="/assets/index-D8S8KgVo.css">
   </head>
+
   <body>
     <div id="root"></div>
   </body>

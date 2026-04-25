@@ -1,25 +1,33 @@
 // src/components/ui/AIAssistant_UI/suggested-prompts.tsx
 "use client"
 
+import {
+  TrendingUp, AlertTriangle, PiggyBank,
+  Lightbulb, BarChart2, ArrowLeftRight,
+} from "lucide-react"
+
 const PROMPTS = [
-  "What did I spend the most on this month?",
-  "Am I over budget in any category?",
-  "How much did I save this month?",
-  "Give me tips to reduce my expenses",
-  "What's my biggest expense category?",
-  "How does my spending compare to last month?",
+  { text: "What did I spend the most on this month?",      Icon: TrendingUp,      color: "text-violet-400",  bg: "bg-violet-500/10"  },
+  { text: "Am I over budget in any category?",             Icon: AlertTriangle,   color: "text-red-400",     bg: "bg-red-500/10"     },
+  { text: "How much did I save this month?",               Icon: PiggyBank,       color: "text-emerald-400", bg: "bg-emerald-500/10" },
+  { text: "Give me tips to reduce my expenses",            Icon: Lightbulb,       color: "text-amber-400",   bg: "bg-amber-500/10"   },
+  { text: "What's my biggest expense category?",           Icon: BarChart2,       color: "text-teal-400",    bg: "bg-teal-500/10"    },
+  { text: "How does my spending compare to last month?",   Icon: ArrowLeftRight,  color: "text-blue-400",    bg: "bg-blue-500/10"    },
 ]
 
 export function SuggestedPrompts({ onSelect }: { onSelect: (p: string) => void }) {
   return (
-    <div className="flex flex-wrap gap-2 justify-center max-w-lg">
-      {PROMPTS.map((p) => (
+    <div className="grid grid-cols-2 gap-2 w-full max-w-[440px]">
+      {PROMPTS.map(({ text, Icon, color, bg }) => (
         <button
-          key={p}
-          onClick={() => onSelect(p)}
-          className="text-xs rounded-full border border-border px-3 py-1.5 text-muted-foreground hover:text-foreground hover:border-foreground/50 hover:bg-muted transition-colors text-left"
+          key={text}
+          onClick={() => onSelect(text)}
+          className="flex items-start gap-2.5 rounded-xl border border-white/[0.08] bg-white/[0.03] px-3 py-2.5 text-left transition-colors hover:bg-white/[0.07] hover:border-white/[0.15]"
         >
-          {p}
+          <div className={`mt-0.5 size-7 rounded-lg ${bg} flex items-center justify-center flex-shrink-0`}>
+            <Icon size={14} className={color} />
+          </div>
+          <span className="text-xs text-white/60 leading-[1.45] pt-0.5">{text}</span>
         </button>
       ))}
     </div>

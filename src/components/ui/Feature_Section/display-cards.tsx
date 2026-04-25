@@ -25,7 +25,13 @@ function DisplayCard({
   return (
     <div
       className={cn(
-        "relative flex h-36 w-[22rem] -skew-y-[8deg] select-none flex-col justify-between rounded-xl border-2 bg-muted/70 backdrop-blur-sm px-4 py-3 transition-all duration-700 after:absolute after:-right-1 after:top-[-5%] after:h-[110%] after:w-[20rem] after:bg-gradient-to-l after:from-background after:to-transparent after:content-[''] hover:border-white/20 hover:bg-muted [&>*]:flex [&>*]:items-center [&>*]:gap-2",
+        // FIX: w-[22rem] → w-[min(22rem,55vw)]
+        // The three stacked cards have translate-x offsets of 0, +4rem, +8rem.
+        // The rightmost card's right edge reaches: card_width + 8rem.
+        // At 55vw card width on a 375px phone → 206px + 128px = 334px < 375px ✓
+        // At 55vw on a 390px phone → 215px + 128px = 343px < 390px ✓
+        // On desktop min(22rem, 55vw) = 22rem since 55vw >> 22rem at 1280px ✓
+        "relative flex h-36 w-[min(22rem,55vw)] -skew-y-[8deg] select-none flex-col justify-between rounded-xl border-2 bg-muted/70 backdrop-blur-sm px-4 py-3 transition-all duration-700 after:absolute after:-right-1 after:top-[-5%] after:h-[110%] after:w-[20rem] after:bg-gradient-to-l after:from-background after:to-transparent after:content-[''] hover:border-white/20 hover:bg-muted [&>*]:flex [&>*]:items-center [&>*]:gap-2",
         className
       )}
     >
@@ -61,7 +67,7 @@ export default function DisplayCards({ cards }: DisplayCardsProps) {
   const displayCards = cards || defaultCards;
 
   return (
-    <div className="grid [grid-template-areas:'stack'] place-items-center opacity-100 animate-in fade-in-0 duration-700">
+    <div className="grid [grid-template-areas:'stack'] place-items-center opacity-100 animate-in fade-in-0 duration-700 -translate-x-8 sm:translate-x-0">
       {displayCards.map((cardProps, index) => (
         <DisplayCard key={index} {...cardProps} />
       ))}

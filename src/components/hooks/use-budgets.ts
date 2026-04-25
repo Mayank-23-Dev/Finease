@@ -1,5 +1,5 @@
 // src/components/hooks/use-budgets.ts
-import { useEffect, useState } from "react"
+import { useEffect, useState, useCallback } from "react"
 import { supabase } from "@/lib/supabase"
 import { useAuth } from "@/components/hooks/use-auth"
 
@@ -8,8 +8,8 @@ export type Budget = {
   firebase_uid: string
   category:     string
   amount:       number
-  spent:        number   // computed client-side from transactions
-  month:        string   // "YYYY-MM"
+  spent:        number
+  month:        string
   created_at?:  string
 }
 
@@ -20,12 +20,12 @@ function getCurrentMonth() {
 
 export function useBudgets() {
   const { user } = useAuth()
-  const [budgets,  setBudgets]  = useState<Budget[]>([])
-  const [loading,  setLoading]  = useState(true)
-  const [error,    setError]    = useState<string | null>(null)
-  const currentMonth = getCurrentMonth()
+  const [budgets,       setBudgets]       = useState<Budget[]>([])
+  const [loading,       setLoading]       = useState(true)
+  const [error,         setError]         = useState<string | null>(null)
+  const [selectedMonth, setSelectedMonth] = useState(getCurrentMonth)
 
-  const fetchBudgets = async () => {
+  const fetchBudgets = useCallback(async (month: string) => {
     if (!user) return
     setLoading(true)
 
@@ -33,17 +33,21 @@ export function useBudgets() {
       .from("budgets")
       .select("*")
       .eq("firebase_uid", user.uid)
-      .eq("month", currentMonth)
+      .eq("month", month)
 
     if (bErr) { setError(bErr.message); setLoading(false); return }
+
+    // ✅ FIX: compute the actual last day of the month instead of hardcoding 31
+    const [year, mon] = month.split("-").map(Number)
+    const lastDay = new Date(year, mon, 0).getDate()
 
     const { data: txRows, error: tErr } = await supabase
       .from("transactions")
       .select("category, amount, type")
       .eq("firebase_uid", user.uid)
       .eq("type", "Debit")
-      .gte("date", `${currentMonth}-01`)
-      .lte("date", `${currentMonth}-31`)
+      .gte("date", `${month}-01`)
+      .lte("date", `${month}-${String(lastDay).padStart(2, "0")}`)
 
     if (tErr) { setError(tErr.message); setLoading(false); return }
 
@@ -60,33 +64,26 @@ export function useBudgets() {
 
     setBudgets(enriched)
     setLoading(false)
-  }
+  }, [user])
 
-  const addBudget = async ({
-    category, amount,
-  }: { category: string; amount: number }) => {
+  const addBudget = async ({ category, amount }: { category: string; amount: number }) => {
     if (!user) return { error: "Not logged in" }
 
     const { data, error } = await supabase
       .from("budgets")
       .upsert(
-        { firebase_uid: user.uid, category, amount, month: currentMonth },
+        { firebase_uid: user.uid, category, amount, month: selectedMonth },
         { onConflict: "firebase_uid,category,month" }
       )
       .select()
       .single()
 
     if (error) { setError(error.message); return { error: error.message } }
-
-    await fetchBudgets()
+    await fetchBudgets(selectedMonth)
     return { data }
   }
 
-  // ── NEW: updateBudget ───────────────────────────────────────────────────────
-  const updateBudget = async (
-    id: string,
-    updates: { category: string; amount: number }
-  ) => {
+  const updateBudget = async (id: string, updates: { category: string; amount: number }) => {
     if (!user) return { error: "Not logged in" }
 
     const { data, error } = await supabase
@@ -98,12 +95,9 @@ export function useBudgets() {
       .single()
 
     if (error) { setError(error.message); return { error: error.message } }
-
-    // Refetch to recompute spent values with the possibly new category
-    await fetchBudgets()
+    await fetchBudgets(selectedMonth)
     return { data }
   }
-  // ───────────────────────────────────────────────────────────────────────────
 
   const deleteBudget = async (id: string) => {
     if (!user) return
@@ -113,18 +107,19 @@ export function useBudgets() {
   }
 
   useEffect(() => {
-    if (user) fetchBudgets()
+    if (user) fetchBudgets(selectedMonth)
     else { setBudgets([]); setLoading(false) }
-  }, [user])
+  }, [user, selectedMonth, fetchBudgets])
 
   return {
     budgets,
     loading,
     error,
     addBudget,
-    updateBudget,   // ← newly exported
+    updateBudget,
     deleteBudget,
-    refetch: fetchBudgets,
-    currentMonth,
+    refetch:      () => fetchBudgets(selectedMonth),
+    selectedMonth,
+    setSelectedMonth,
   }
 }

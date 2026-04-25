@@ -25,22 +25,37 @@ interface Props {
 }
 
 export function AddBudgetDialog({ onAdd }: Props) {
-  const [open,     setOpen]     = React.useState(false)
-  const [category, setCategory] = React.useState("")
-  const [amount,   setAmount]   = React.useState("")
-  const [saving,   setSaving]   = React.useState(false)
-  const [errors,   setErrors]   = React.useState<Record<string, string>>({})
+  const [open,       setOpen]       = React.useState(false)
+  const [category,   setCategory]   = React.useState("")
+  const [customName, setCustomName] = React.useState("") // ← NEW
+  const [amount,     setAmount]     = React.useState("")
+  const [saving,     setSaving]     = React.useState(false)
+  const [errors,     setErrors]     = React.useState<Record<string, string>>({})
 
-  const reset = () => { setCategory(""); setAmount(""); setErrors({}) }
+  const isOther = category === "Other" // ← NEW
+
+  const reset = () => {
+    setCategory("")
+    setCustomName("") // ← NEW
+    setAmount("")
+    setErrors({})
+  }
 
   const handleSubmit = async () => {
     const e: Record<string, string> = {}
     if (!category) e.category = "Required"
+
+    // ← NEW: validate custom name when Other is selected
+    if (isOther && !customName.trim()) e.customName = "Please enter a name for this category"
+
     if (!amount || isNaN(Number(amount)) || Number(amount) <= 0) e.amount = "Enter a valid amount"
     if (Object.keys(e).length) { setErrors(e); return }
 
+    // ← NEW: use customName as the actual category if Other
+    const finalCategory = isOther ? customName.trim() : category
+
     setSaving(true)
-    const result = await onAdd({ category, amount: Number(amount) })
+    const result = await onAdd({ category: finalCategory, amount: Number(amount) })
     setSaving(false)
 
     if (result?.error) {
@@ -70,7 +85,11 @@ export function AddBudgetDialog({ onAdd }: Props) {
             <Label>Category</Label>
             <Select
               value={category}
-              onValueChange={(v) => { setCategory(v); setErrors((p) => ({ ...p, category: "" })) }}
+              onValueChange={(v) => {
+                setCategory(v)
+                setCustomName("") // ← NEW: reset custom name on category change
+                setErrors((p) => ({ ...p, category: "", customName: "" }))
+              }}
             >
               <SelectTrigger className="w-full">
                 <SelectValue placeholder="Select category" />
@@ -83,6 +102,23 @@ export function AddBudgetDialog({ onAdd }: Props) {
             </Select>
             {errors.category && <p className="text-xs text-red-400">{errors.category}</p>}
           </div>
+
+          {/* ← NEW: Custom name field, only shown when Other is selected */}
+          {isOther && (
+            <div className="flex flex-col gap-1.5">
+              <Label>Category Name</Label>
+              <Input
+                placeholder="e.g. Gym, Pet Care, Travel..."
+                value={customName}
+                onChange={(e) => {
+                  setCustomName(e.target.value)
+                  setErrors((p) => ({ ...p, customName: "" }))
+                }}
+                autoFocus
+              />
+              {errors.customName && <p className="text-xs text-red-400">{errors.customName}</p>}
+            </div>
+          )}
 
           {/* Amount */}
           <div className="flex flex-col gap-1.5">

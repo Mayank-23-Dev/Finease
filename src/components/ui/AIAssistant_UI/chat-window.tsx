@@ -2,9 +2,9 @@
 "use client"
 
 import * as React from "react"
+import { Bot } from "lucide-react"
 import type { Message } from "@/components/hooks/use-ai-chat"
 
-// ── Lightweight markdown renderer ────────────────────────────────────────────
 function renderMarkdown(text: string): React.ReactNode[] {
   const lines = text.split("\n")
   const nodes: React.ReactNode[] = []
@@ -21,7 +21,7 @@ function renderMarkdown(text: string): React.ReactNode[] {
 
     if (line.startsWith("### ")) {
       nodes.push(
-        <p key={i} className="font-semibold text-foreground mt-2 mb-0.5">
+        <p key={i} className="font-semibold text-white mt-2 mb-0.5">
           {parseInline(line.slice(4))}
         </p>
       )
@@ -31,7 +31,7 @@ function renderMarkdown(text: string): React.ReactNode[] {
 
     if (line.startsWith("## ")) {
       nodes.push(
-        <p key={i} className="font-bold text-foreground mt-3 mb-1">
+        <p key={i} className="font-semibold text-white mt-3 mb-1">
           {parseInline(line.slice(3))}
         </p>
       )
@@ -41,7 +41,7 @@ function renderMarkdown(text: string): React.ReactNode[] {
 
     if (line.startsWith("> ")) {
       nodes.push(
-        <div key={i} className="border-l-2 border-primary/50 pl-3 my-1.5 text-muted-foreground italic text-xs">
+        <div key={i} className="border-l-2 border-white/20 pl-3 my-1.5 text-white/40 italic text-xs">
           {parseInline(line.slice(2))}
         </div>
       )
@@ -53,15 +53,15 @@ function renderMarkdown(text: string): React.ReactNode[] {
       const bullets: React.ReactNode[] = []
       while (i < lines.length && lines[i].match(/^[-•]\s/)) {
         bullets.push(
-          <li key={i} className="flex gap-1.5 items-start">
-            <span className="text-primary mt-0.5 shrink-0">•</span>
+          <li key={i} className="flex gap-2 items-start">
+            <span className="text-white/40 mt-1 shrink-0 text-[8px]">●</span>
             <span>{parseInline(lines[i].slice(2))}</span>
           </li>
         )
         i++
       }
       nodes.push(
-        <ul key={`ul-${i}`} className="flex flex-col gap-1 my-1 text-sm">{bullets}</ul>
+        <ul key={`ul-${i}`} className="flex flex-col gap-1.5 my-1.5 text-sm">{bullets}</ul>
       )
       continue
     }
@@ -71,8 +71,8 @@ function renderMarkdown(text: string): React.ReactNode[] {
       let num = 1
       while (i < lines.length && lines[i].match(/^\d+\.\s/)) {
         items.push(
-          <li key={i} className="flex gap-1.5 items-start">
-            <span className="text-primary font-medium shrink-0 min-w-[1rem]">{num}.</span>
+          <li key={i} className="flex gap-2 items-start">
+            <span className="text-white/50 font-medium shrink-0 min-w-[1rem] text-xs mt-0.5">{num}.</span>
             <span>{parseInline(lines[i].replace(/^\d+\.\s/, ""))}</span>
           </li>
         )
@@ -80,7 +80,7 @@ function renderMarkdown(text: string): React.ReactNode[] {
         num++
       }
       nodes.push(
-        <ol key={`ol-${i}`} className="flex flex-col gap-1 my-1 text-sm">{items}</ol>
+        <ol key={`ol-${i}`} className="flex flex-col gap-1.5 my-1.5 text-sm">{items}</ol>
       )
       continue
     }
@@ -98,16 +98,19 @@ function parseInline(text: string): React.ReactNode {
   const parts = text.split(/(\*\*[^*]+\*\*|\*[^*]+\*|`[^`]+`)/g)
   return parts.map((part, idx) => {
     if (part.startsWith("**") && part.endsWith("**"))
-      return <strong key={idx} className="font-semibold text-foreground">{part.slice(2, -2)}</strong>
+      return <strong key={idx} className="font-medium text-white">{part.slice(2, -2)}</strong>
     if (part.startsWith("*") && part.endsWith("*"))
-      return <em key={idx} className="italic">{part.slice(1, -1)}</em>
+      return <em key={idx} className="italic text-white/70">{part.slice(1, -1)}</em>
     if (part.startsWith("`") && part.endsWith("`"))
-      return <code key={idx} className="bg-background/60 rounded px-1 py-0.5 text-xs font-mono text-primary">{part.slice(1, -1)}</code>
+      return (
+        <code key={idx} className="bg-white/[0.08] rounded px-1.5 py-0.5 text-[11px] font-mono text-white/70">
+          {part.slice(1, -1)}
+        </code>
+      )
     return part
   })
 }
 
-// ── ChatWindow ────────────────────────────────────────────────────────────────
 export function ChatWindow({
   messages,
   loading,
@@ -127,26 +130,27 @@ export function ChatWindow({
 
   return (
     <div
-      className="flex-1 overflow-y-auto px-4 lg:px-6 py-4 flex flex-col gap-4"
+      className="flex-1 overflow-y-auto px-4 lg:px-6 py-5 flex flex-col gap-5"
       style={{ scrollbarWidth: "none" }}
     >
-      <style>{`
-        .chat-scroll::-webkit-scrollbar { display: none; }
-      `}</style>
-
       {messages.map((m) => (
-        <div key={m.id} className={`flex gap-3 ${m.role === "user" ? "justify-end" : "justify-start"}`}>
+        <div
+          key={m.id}
+          className={`flex gap-2.5 ${m.role === "user" ? "justify-end" : "justify-start"}`}
+        >
+          {/* AI avatar */}
           {m.role === "assistant" && (
-            <div className="size-7 rounded-full bg-primary/20 flex items-center justify-center text-xs font-medium shrink-0 mt-0.5">
-              AI
+            <div className="size-7 rounded-full bg-white/[0.06] border border-white/[0.1] flex items-center justify-center shrink-0 mt-0.5">
+              <Bot size={13} className="text-white/50" />
             </div>
           )}
 
+          {/* Bubble */}
           <div
             className={`max-w-[78%] rounded-2xl px-4 py-3 text-sm ${
               m.role === "user"
-                ? "bg-primary text-primary-foreground rounded-br-sm"
-                : "bg-muted text-foreground rounded-bl-sm"
+                ? "bg-white/[0.1] border border-white/[0.12] text-white/90 rounded-br-sm"
+                : "bg-white/[0.04] border border-white/[0.07] text-white/70 rounded-bl-sm"
             }`}
           >
             {m.role === "assistant"
@@ -155,8 +159,9 @@ export function ChatWindow({
             }
           </div>
 
+          {/* User avatar */}
           {m.role === "user" && (
-            <div className="size-7 rounded-full bg-secondary flex items-center justify-center text-xs font-medium shrink-0 mt-0.5 overflow-hidden">
+            <div className="size-7 rounded-full bg-white/[0.08] border border-white/10 flex items-center justify-center text-[11px] font-medium text-white/60 shrink-0 mt-0.5 overflow-hidden">
               {userAvatar
                 ? <img src={userAvatar} alt="avatar" className="size-full object-cover" />
                 : userInitials
@@ -166,12 +171,19 @@ export function ChatWindow({
         </div>
       ))}
 
+      {/* Typing indicator */}
       {loading && (
-        <div className="flex gap-3 justify-start">
-          <div className="size-7 rounded-full bg-primary/20 flex items-center justify-center text-xs shrink-0">AI</div>
-          <div className="bg-muted rounded-2xl rounded-bl-sm px-4 py-3 flex gap-1 items-center">
+        <div className="flex gap-2.5 justify-start">
+          <div className="size-7 rounded-full bg-white/[0.06] border border-white/[0.1] flex items-center justify-center shrink-0">
+            <Bot size={13} className="text-white/50" />
+          </div>
+          <div className="bg-white/[0.04] border border-white/[0.07] rounded-2xl rounded-bl-sm px-4 py-3.5 flex gap-1.5 items-center">
             {[0, 1, 2].map((i) => (
-              <span key={i} className="size-1.5 rounded-full bg-muted-foreground animate-bounce" style={{ animationDelay: `${i * 0.15}s` }} />
+              <span
+                key={i}
+                className="size-1.5 rounded-full bg-white/30 animate-bounce"
+                style={{ animationDelay: `${i * 0.15}s` }}
+              />
             ))}
           </div>
         </div>

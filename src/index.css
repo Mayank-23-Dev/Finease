@@ -130,3 +130,11 @@ html {
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
 }
+@media (max-width: 767px) {
+  html, body {
+    overflow-x: hidden;
+  }
+  #root {
+    padding: 0;
+  }
+}

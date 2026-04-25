@@ -9,6 +9,7 @@ import { useChatStore }     from "@/components/hooks/use-chat-store"
 import { useTransactions }  from "@/components/hooks/use-transactions"
 import { useBudgets }       from "@/components/hooks/use-budgets"
 import { useAuth }          from "@/components/hooks/use-auth"
+import { Bot }              from "lucide-react"
 
 export default function AIAssistantPage() {
   const { transactions, addTransaction } = useTransactions()
@@ -42,33 +43,43 @@ export default function AIAssistantPage() {
       <div className="flex flex-col h-full max-h-[calc(100vh-var(--header-height))]">
 
         {/* Header */}
-        <div className="flex items-center justify-between px-4 lg:px-6 py-4 border-b shrink-0">
-          <div>
-            <h1 className="text-2xl font-semibold tracking-tight">AI Assistant</h1>
-            <p className="text-sm text-muted-foreground mt-0.5">
-              Ask anything — or just say what you spent
-            </p>
+        <div className="flex items-center justify-between px-4 lg:px-6 py-3.5 border-b border-white/[0.07] shrink-0">
+          <div className="flex items-center gap-3">
+            {/* AI avatar */}
+            <div className="size-8 rounded-full bg-violet-500/10 border border-violet-500/20 flex items-center justify-center">
+              <Bot size={15} className="text-violet-400" />
+            </div>
+            <div>
+              <h1 className="text-sm font-medium text-white leading-tight">FinEase AI</h1>
+              <div className="flex items-center gap-1.5 mt-0.5">
+                <span className="size-1.5 rounded-full bg-emerald-400" />
+                <span className="text-[11px] text-white/35">Online · Powered by Llama 3.1</span>
+              </div>
+            </div>
           </div>
+
           {messages.length > 0 && (
             <button
               onClick={clearChat}
-              className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+              className="text-[11px] text-white/30 hover:text-white/60 transition-colors"
             >
               Clear chat
             </button>
           )}
         </div>
 
-        {/* Chat area */}
+        {/* Body */}
         <div className="flex flex-col flex-1 overflow-hidden">
           {messages.length === 0 ? (
-            <div className="flex flex-col items-center justify-center flex-1 gap-6 px-4">
+            <div className="flex flex-col items-center justify-center flex-1 gap-7 px-4 py-8">
               <div className="text-center">
-                <div className="text-4xl mb-3">💬</div>
-                <p className="text-base font-medium">How can I help you today?</p>
-                <p className="text-sm text-muted-foreground mt-1">
+                <p className="text-base font-medium text-white">How can I help you today?</p>
+                <p className="text-sm text-white/40 mt-1.5 leading-relaxed">
                   Ask about your finances or say{" "}
-                  <span className="italic">"I spent ₹500 on groceries"</span> to log it instantly.
+                  <span className="text-white/60 bg-white/[0.06] px-1.5 py-0.5 rounded text-xs font-mono">
+                    I spent ₹500 on groceries
+                  </span>{" "}
+                  to log it instantly.
                 </p>
               </div>
               <SuggestedPrompts onSelect={sendMessage} />
@@ -83,7 +94,7 @@ export default function AIAssistantPage() {
           )}
 
           {/* Input */}
-          <div className="px-4 lg:px-6 py-3 border-t shrink-0">
+          <div className="px-4 lg:px-6 py-3 border-t border-white/[0.07] shrink-0">
             <ChatInput
               onSend={sendMessage}
               loading={loading}
