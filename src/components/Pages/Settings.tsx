@@ -77,6 +77,11 @@ export default function SettingsPage() {
               setDisplayName={s.setDisplayName}
               setNameMsg={s.setNameMsg}
               onSaveName={s.handleSaveName}
+              dob={s.form.dob}                    // ← NEW
+              onDobChange={s.setField("dob")}     // ← NEW
+              onSaveProfile={s.handleSaveProfile} // ← NEW
+              profileSaving={s.profileSaving}     // ← NEW
+              profileMsg={s.profileMsg}           // ← NEW
             />
           )}
 

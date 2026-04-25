@@ -53,62 +53,45 @@ import { useIsMobile } from "@/components/hooks/use-mobile"
 import { Badge } from "@/components/ui/Dashboard_UI/badge"
 import { Button } from "@/components/ui/button"
 import {
-  Drawer,
-  DrawerClose,
-  DrawerContent,
-  DrawerDescription,
-  DrawerFooter,
-  DrawerHeader,
-  DrawerTitle,
-  DrawerTrigger,
+  Drawer, DrawerClose, DrawerContent, DrawerDescription,
+  DrawerFooter, DrawerHeader, DrawerTitle, DrawerTrigger,
 } from "@/components/ui/Dashboard_UI/drawer"
 import {
-  DropdownMenu,
-  DropdownMenuCheckboxItem,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
+  DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent,
+  DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger,
 } from "@/components/ui/Dashboard_UI/dropdown-menu"
-import { Label } from "@/components/ui/Dashboard_UI/label"
+import { Label }     from "@/components/ui/Dashboard_UI/label"
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
+  Select, SelectContent, SelectItem,
+  SelectTrigger, SelectValue,
 } from "@/components/ui/Dashboard_UI/select"
 import { Separator } from "@/components/ui/Dashboard_UI/separator"
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
+  Table, TableBody, TableCell,
+  TableHead, TableHeader, TableRow,
 } from "@/components/ui/Dashboard_UI/table"
 
-import { EditTransactionDialog } from "@/components/ui/Transaction_UI/edit-transaction-dialog"
+import { EditTransactionDialog }   from "@/components/ui/Transaction_UI/edit-transaction-dialog"
 import { DeleteTransactionDialog } from "@/components/ui/Transaction_UI/delete-transaction-dialog"
 import type { Transaction } from "@/components/hooks/use-transactions"
 
 export const schema = z.object({
-  id: z.number(),
+  id:          z.number(),
   transaction: z.string(),
-  category: z.string(),
-  amount: z.number(),
-  date: z.string(),
-  method: z.string(),
-  status: z.string(),
-  type: z.string(),
+  category:    z.string(),
+  amount:      z.number(),
+  date:        z.string(),
+  method:      z.string(),
+  status:      z.string(),
+  type:        z.string(),
 })
 
-// ─── Types ────────────────────────────────────────────────────────────────────
 type TransactionUpdate = Omit<Transaction, "id" | "firebase_uid" | "created_at">
 
 interface TableCallbacks {
-  onEdit:   (id: number, updated: TransactionUpdate) => Promise<void>
-  onDelete: (id: number) => Promise<void>
+  onEdit:            (id: number, updated: TransactionUpdate) => Promise<void>
+  onDelete:          (id: number) => Promise<void>
+  budgetCategories?: string[]
 }
 
 // ─── Drag handle ──────────────────────────────────────────────────────────────
@@ -128,20 +111,18 @@ function DragHandle({ id }: { id: number }) {
   )
 }
 
-// ─── Actions cell (3-dot menu) ────────────────────────────────────────────────
+// ─── Actions cell ─────────────────────────────────────────────────────────────
 function ActionsCell({
-  row,
-  onEdit,
-  onDelete,
+  row, onEdit, onDelete, budgetCategories = [],
 }: {
-  row: Row<z.infer<typeof schema>>
-  onEdit:   (id: number, updated: TransactionUpdate) => Promise<void>
-  onDelete: (id: number) => Promise<void>
+  row:               Row<z.infer<typeof schema>>
+  onEdit:            (id: number, updated: TransactionUpdate) => Promise<void>
+  onDelete:          (id: number) => Promise<void>
+  budgetCategories?: string[]
 }) {
   const [editOpen,   setEditOpen]   = React.useState(false)
   const [deleteOpen, setDeleteOpen] = React.useState(false)
 
-  // Cast schema row to Transaction shape (firebase_uid not needed for dialogs)
   const asTransaction: Transaction = {
     ...(row.original as Transaction),
     firebase_uid: "",
@@ -155,10 +136,11 @@ function ActionsCell({
             <IconDotsVertical />
           </Button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" className="cursor-pointer">
+        <DropdownMenuContent align="end">
           <DropdownMenuItem onSelect={() => setEditOpen(true)} className="cursor-pointer">
             Edit
           </DropdownMenuItem>
+          <DropdownMenuSeparator />
           <DropdownMenuItem
             variant="destructive"
             onSelect={() => setDeleteOpen(true)}
@@ -174,6 +156,7 @@ function ActionsCell({
         open={editOpen}
         onOpenChange={setEditOpen}
         onSave={onEdit}
+        budgetCategories={budgetCategories}
       />
 
       <DeleteTransactionDialog
@@ -186,23 +169,23 @@ function ActionsCell({
   )
 }
 
-// ─── Column factory (needs callbacks) ────────────────────────────────────────
+// ─── Column factory ───────────────────────────────────────────────────────────
 function buildColumns(callbacks: TableCallbacks): ColumnDef<z.infer<typeof schema>>[] {
   return [
     {
-      id: "drag",
+      id:     "drag",
       header: () => null,
-      cell: ({ row }) => <DragHandle id={row.original.id} />,
+      cell:   ({ row }) => <DragHandle id={row.original.id} />,
     },
     {
       accessorKey: "transaction",
-      header: "Transaction",
-      cell: ({ row }) => <TransactionViewer item={row.original} />,
+      header:      "Transaction",
+      cell:        ({ row }) => <TransactionViewer item={row.original} />,
     },
     {
       accessorKey: "category",
-      header: "Category",
-      cell: ({ row }) => (
+      header:      "Category",
+      cell:        ({ row }) => (
         <div className="inline-flex">
           <Badge variant="outline">{row.original.category}</Badge>
         </div>
@@ -210,8 +193,8 @@ function buildColumns(callbacks: TableCallbacks): ColumnDef<z.infer<typeof schem
     },
     {
       accessorKey: "amount",
-      header: () => <div className="text-right w-[120px]">Amount</div>,
-      cell: ({ row }) => (
+      header:      () => <div className="text-right w-[120px]">Amount</div>,
+      cell:        ({ row }) => (
         <div className="text-right w-[120px] font-medium">
           {"₹" + row.original.amount.toLocaleString()}
         </div>
@@ -219,13 +202,13 @@ function buildColumns(callbacks: TableCallbacks): ColumnDef<z.infer<typeof schem
     },
     {
       accessorKey: "date",
-      header: () => <div className="pl-6">Date</div>,
-      cell: ({ row }) => <div className="pl-6">{row.original.date}</div>,
+      header:      () => <div className="pl-6">Date</div>,
+      cell:        ({ row }) => <div className="pl-6">{row.original.date}</div>,
     },
     {
       accessorKey: "type",
-      header: "Type",
-      cell: ({ row }) => {
+      header:      "Type",
+      cell:        ({ row }) => {
         const type = row.original.type
         return (
           <Badge
@@ -242,29 +225,29 @@ function buildColumns(callbacks: TableCallbacks): ColumnDef<z.infer<typeof schem
     },
     {
       accessorKey: "method",
-      header: "Method",
+      header:      "Method",
     },
     {
       accessorKey: "status",
-      header: "Status",
-      cell: ({ row }) => (
+      header:      "Status",
+      cell:        ({ row }) => (
         <Badge variant="outline">
-          {row.original.status === "Completed" ? (
-            <IconCircleCheckFilled className="fill-green-500" />
-          ) : (
-            <IconLoader />
-          )}
+          {row.original.status === "Completed"
+            ? <IconCircleCheckFilled className="fill-green-500" />
+            : <IconLoader />
+          }
           {row.original.status}
         </Badge>
       ),
     },
     {
-      id: "actions",
+      id:   "actions",
       cell: ({ row }) => (
         <ActionsCell
           row={row}
           onEdit={callbacks.onEdit}
           onDelete={callbacks.onDelete}
+          budgetCategories={callbacks.budgetCategories}
         />
       ),
     },
@@ -276,17 +259,13 @@ function DraggableRow({ row }: { row: Row<z.infer<typeof schema>> }) {
   const { transform, transition, setNodeRef, isDragging } = useSortable({
     id: row.original.id,
   })
-
   return (
     <TableRow
       data-state={row.getIsSelected() && "selected"}
       data-dragging={isDragging}
       ref={setNodeRef}
       className="relative z-0 data-[dragging=true]:z-10 data-[dragging=true]:opacity-80"
-      style={{
-        transform: CSS.Transform.toString(transform),
-        transition: transition,
-      }}
+      style={{ transform: CSS.Transform.toString(transform), transition }}
     >
       {row.getVisibleCells().map((cell) => (
         <TableCell key={cell.id}>
@@ -305,13 +284,15 @@ export function DataTable({
   viewAllHref = "/dashboard/transactions",
   onEdit,
   onDelete,
+  budgetCategories = [],
 }: {
-  data: z.infer<typeof schema>[]
-  limit?: number
-  showViewAll?: boolean
-  viewAllHref?: string
-  onEdit:   (id: number, updated: TransactionUpdate) => Promise<void>
-  onDelete: (id: number) => Promise<void>
+  data:              z.infer<typeof schema>[]
+  limit?:            number
+  showViewAll?:      boolean
+  viewAllHref?:      string
+  onEdit:            (id: number, updated: TransactionUpdate) => Promise<void>
+  onDelete:          (id: number) => Promise<void>
+  budgetCategories?: string[]
 }) {
   const [data, setData] = React.useState(() =>
     limit ? initialData.slice(0, limit) : initialData
@@ -319,7 +300,7 @@ export function DataTable({
 
   React.useEffect(() => {
     setData(limit ? initialData.slice(0, limit) : initialData)
-  }, [initialData])
+  }, [initialData, limit])
 
   const [rowSelection,     setRowSelection]     = React.useState({})
   const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({})
@@ -339,34 +320,27 @@ export function DataTable({
     [data]
   )
 
-  // Memoize columns so callbacks are stable
   const columns = React.useMemo(
-    () => buildColumns({ onEdit, onDelete }),
-    [onEdit, onDelete]
+    () => buildColumns({ onEdit, onDelete, budgetCategories }),
+    [onEdit, onDelete, budgetCategories]
   )
 
   const table = useReactTable({
     data,
     columns,
-    state: {
-      sorting,
-      columnVisibility,
-      rowSelection,
-      columnFilters,
-      pagination,
-    },
-    getRowId: (row) => row.id.toString(),
-    enableRowSelection: true,
-    onRowSelectionChange: setRowSelection,
-    onSortingChange: setSorting,
-    onColumnFiltersChange: setColumnFilters,
+    state: { sorting, columnVisibility, rowSelection, columnFilters, pagination },
+    getRowId:               (row) => row.id.toString(),
+    enableRowSelection:     true,
+    onRowSelectionChange:   setRowSelection,
+    onSortingChange:        setSorting,
+    onColumnFiltersChange:  setColumnFilters,
     onColumnVisibilityChange: setColumnVisibility,
-    onPaginationChange: setPagination,
-    getCoreRowModel: getCoreRowModel(),
-    getFilteredRowModel: getFilteredRowModel(),
-    getPaginationRowModel: getPaginationRowModel(),
-    getSortedRowModel: getSortedRowModel(),
-    getFacetedRowModel: getFacetedRowModel(),
+    onPaginationChange:     setPagination,
+    getCoreRowModel:        getCoreRowModel(),
+    getFilteredRowModel:    getFilteredRowModel(),
+    getPaginationRowModel:  getPaginationRowModel(),
+    getSortedRowModel:      getSortedRowModel(),
+    getFacetedRowModel:     getFacetedRowModel(),
     getFacetedUniqueValues: getFacetedUniqueValues(),
   })
 
@@ -398,18 +372,15 @@ export function DataTable({
           <DropdownMenuContent align="end" className="w-56">
             {table
               .getAllColumns()
-              .filter(
-                (column) =>
-                  typeof column.accessorFn !== "undefined" && column.getCanHide()
-              )
-              .map((column) => (
+              .filter((col) => typeof col.accessorFn !== "undefined" && col.getCanHide())
+              .map((col) => (
                 <DropdownMenuCheckboxItem
-                  key={column.id}
+                  key={col.id}
                   className="capitalize"
-                  checked={column.getIsVisible()}
-                  onCheckedChange={(value) => column.toggleVisibility(!!value)}
+                  checked={col.getIsVisible()}
+                  onCheckedChange={(value) => col.toggleVisibility(!!value)}
                 >
-                  {column.id}
+                  {col.id}
                 </DropdownMenuCheckboxItem>
               ))}
           </DropdownMenuContent>
@@ -434,10 +405,7 @@ export function DataTable({
                       <TableHead key={header.id} colSpan={header.colSpan}>
                         {header.isPlaceholder
                           ? null
-                          : flexRender(
-                              header.column.columnDef.header,
-                              header.getContext()
-                            )}
+                          : flexRender(header.column.columnDef.header, header.getContext())}
                       </TableHead>
                     ))}
                   </TableRow>
@@ -445,20 +413,14 @@ export function DataTable({
               </TableHeader>
               <TableBody className="**:data-[slot=table-cell]:first:w-8">
                 {table.getRowModel().rows?.length ? (
-                  <SortableContext
-                    items={dataIds}
-                    strategy={verticalListSortingStrategy}
-                  >
+                  <SortableContext items={dataIds} strategy={verticalListSortingStrategy}>
                     {table.getRowModel().rows.map((row) => (
                       <DraggableRow key={row.id} row={row} />
                     ))}
                   </SortableContext>
                 ) : (
                   <TableRow>
-                    <TableCell
-                      colSpan={columns.length}
-                      className="h-24 text-center"
-                    >
+                    <TableCell colSpan={columns.length} className="h-24 text-center">
                       No results.
                     </TableCell>
                   </TableRow>
@@ -476,14 +438,12 @@ export function DataTable({
                 to={viewAllHref}
                 className="text-sm text-primary underline-offset-4 hover:underline"
               >
-                {"View all transactions \u2192"}
+                View all transactions →
               </Link>
             ) : (
               <span>
-                {table.getFilteredSelectedRowModel().rows.length}
-                {" of "}
-                {table.getFilteredRowModel().rows.length}
-                {" row(s) selected."}
+                {table.getFilteredSelectedRowModel().rows.length} of{" "}
+                {table.getFilteredRowModel().rows.length} row(s) selected.
               </span>
             )}
           </div>
@@ -503,19 +463,16 @@ export function DataTable({
                   </SelectTrigger>
                   <SelectContent side="top">
                     {[10, 20, 30, 40, 50].map((pageSize) => (
-                      <SelectItem key={pageSize} value={`${pageSize}`}>
-                        {pageSize}
-                      </SelectItem>
+                      <SelectItem key={pageSize} value={`${pageSize}`}>{pageSize}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
               </div>
+
               <div className="flex w-fit items-center justify-center text-sm font-medium">
-                {"Page "}
-                {table.getState().pagination.pageIndex + 1}
-                {" of "}
-                {table.getPageCount()}
+                Page {table.getState().pagination.pageIndex + 1} of {table.getPageCount()}
               </div>
+
               <div className="ml-auto flex items-center gap-2 lg:ml-0">
                 <Button
                   variant="outline"
@@ -527,9 +484,7 @@ export function DataTable({
                   <IconChevronsLeft />
                 </Button>
                 <Button
-                  variant="outline"
-                  className="size-8 cursor-pointer"
-                  size="icon"
+                  variant="outline" className="size-8 cursor-pointer" size="icon"
                   onClick={() => table.previousPage()}
                   disabled={!table.getCanPreviousPage()}
                 >
@@ -537,9 +492,7 @@ export function DataTable({
                   <IconChevronLeft />
                 </Button>
                 <Button
-                  variant="outline"
-                  className="size-8 cursor-pointer"
-                  size="icon"
+                  variant="outline" className="size-8 cursor-pointer" size="icon"
                   onClick={() => table.nextPage()}
                   disabled={!table.getCanNextPage()}
                 >
@@ -548,8 +501,7 @@ export function DataTable({
                 </Button>
                 <Button
                   variant="outline"
-                  className="hidden size-8 lg:flex cursor-pointer"
-                  size="icon"
+                  className="hidden size-8 lg:flex cursor-pointer" size="icon"
                   onClick={() => table.setPageIndex(table.getPageCount() - 1)}
                   disabled={!table.getCanNextPage()}
                 >
@@ -565,7 +517,7 @@ export function DataTable({
   )
 }
 
-// ─── Transaction Viewer (drawer) ───────────────────────────────────────────────
+// ─── Transaction Viewer drawer ─────────────────────────────────────────────────
 function TransactionViewer({ item }: { item: z.infer<typeof schema> }) {
   const isMobile = useIsMobile()
 
@@ -589,7 +541,7 @@ function TransactionViewer({ item }: { item: z.infer<typeof schema> }) {
             </div>
             <div>
               <Label>Amount</Label>
-              <p className="font-medium">{"₹" + item.amount}</p>
+              <p className="font-medium">{"₹" + item.amount.toLocaleString()}</p>
             </div>
           </div>
           <Separator />
@@ -604,9 +556,17 @@ function TransactionViewer({ item }: { item: z.infer<typeof schema> }) {
             </div>
           </div>
           <Separator />
-          <div>
-            <Label>Status</Label>
-            <p className="text-muted-foreground">{item.status}</p>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <Label>Type</Label>
+              <p className={item.type === "Debit" ? "text-red-400" : "text-green-400"}>
+                {item.type}
+              </p>
+            </div>
+            <div>
+              <Label>Status</Label>
+              <p className="text-muted-foreground">{item.status}</p>
+            </div>
           </div>
         </div>
         <DrawerFooter>

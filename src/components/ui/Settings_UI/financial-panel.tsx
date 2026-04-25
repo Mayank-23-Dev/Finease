@@ -1,19 +1,16 @@
 // src/components/ui/Settings_UI/financial-panel.tsx
 "use client"
 
-import { Check, User, Globe, CreditCard, Calendar as CalendarIcon,
-         TrendingUp, Briefcase, Target, GraduationCap } from "lucide-react"
+import { Check, User, Globe, CreditCard } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input }  from "@/components/ui/input"
 import {
-  Card, FieldRow, SectionLabel, SelectDropdown, DateField, Toast, type StatusMsg,
+  Card, FieldRow, SectionLabel, SelectDropdown, Toast, type StatusMsg,
 } from "./settings-ui"
 import type { ProfileForm } from "@/components/hooks/use-settings"
 
-const COUNTRIES      = ["India","United States","United Kingdom","Canada","Australia","Germany","France","Japan","Other"]
-const CURRENCIES     = ["INR","USD","EUR","GBP","JPY","CAD","AUD"]
-const EXPERIENCES    = ["Beginner","Intermediate","Advanced"]
-const INCOME_SOURCES = ["Salary","Freelance","Business","Investments","Other"]
+const COUNTRIES   = ["India","United States","United Kingdom","Canada","Australia","Germany","France","Japan","Other"]
+const CURRENCIES  = ["INR","USD","EUR","GBP","JPY","CAD","AUD"]
 
 interface FinancialPanelProps {
   form:           ProfileForm
@@ -43,50 +40,35 @@ export function FinancialPanel({
 
   return (
     <div className="space-y-4">
-
-      {/* Identity */}
-      <Card >
+      <Card>
         <SectionLabel>Identity</SectionLabel>
+
         <FieldRow icon={User} label="Full Name" description="Used in reports and exports.">
-          <Input value={form.full_name} onChange={(e) => setField("full_name")(e.target.value)}
-            placeholder="Full name" className={inputCls} />
+          <Input
+            value={form.full_name}
+            onChange={(e) => setField("full_name")(e.target.value)}
+            placeholder="Full name"
+            className={inputCls}
+          />
         </FieldRow>
+
         <FieldRow icon={Globe} label="Country" description="Localises insights for your region.">
           <SelectDropdown value={form.country} options={COUNTRIES} onChange={setField("country")} />
         </FieldRow>
+
         <FieldRow icon={CreditCard} label="Currency" description="Your preferred display currency.">
           <SelectDropdown value={form.currency} options={CURRENCIES} onChange={setField("currency")} />
         </FieldRow>
-        <FieldRow icon={CalendarIcon} label="Date of Birth" description="Private — used for age-based insights only.">
-          <DateField value={form.dob} onChange={setField("dob")} />
-        </FieldRow>
+
+        {/* DOB removed — now lives in Profile panel */}
       </Card>
 
-      {/* Income & Goals
-      <Card>
-        <SectionLabel>Income &amp; Goals</SectionLabel>
-        <FieldRow icon={TrendingUp} label="Monthly Income" description="Approximate gross monthly income.">
-          <Input type="number" value={form.monthly_income}
-            onChange={(e) => setField("monthly_income")(e.target.value)}
-            placeholder="e.g. 50000" min={0} className={inputCls} />
-        </FieldRow>
-        <FieldRow icon={Briefcase} label="Income Source" description="Your primary source of income.">
-          <SelectDropdown value={form.income_source} options={INCOME_SOURCES} onChange={setField("income_source")} />
-        </FieldRow>
-        <FieldRow icon={Target} label="Monthly Savings Goal" description="Target amount to save each month.">
-          <Input type="number" value={form.savings_goal}
-            onChange={(e) => setField("savings_goal")(e.target.value)}
-            placeholder="e.g. 10000" min={0} className={inputCls} />
-        </FieldRow>
-        <FieldRow icon={GraduationCap} label="Financial Experience" description="Personalises AI-powered suggestions.">
-          <SelectDropdown value={form.financial_experience} options={EXPERIENCES} onChange={setField("financial_experience")} />
-        </FieldRow>
-      </Card> */}
-
-      {/* Save */}
       <div className="flex items-center gap-3 pt-1">
-        <Button onClick={onSave} disabled={profileSaving}
-          className="cursor-pointer h-10 px-8 bg-white text-black hover:bg-white/90 border-0 font-semibold">
+        <Button
+          onClick={onSave}
+          disabled={profileSaving}
+          className="cursor-pointer h-10 px-8 bg-white text-black hover:bg-white/90 border-0 font-semibold"
+        >
           {profileSaving
             ? <><span className="size-4 rounded-full border-2 border-black/20 border-t-black animate-spin mr-2" />Saving…</>
             : <><Check className="size-4 mr-2" />Save Changes</>
@@ -94,7 +76,6 @@ export function FinancialPanel({
         </Button>
         <Toast msg={profileMsg} />
       </div>
-
     </div>
   )
 }

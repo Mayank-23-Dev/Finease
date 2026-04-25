@@ -1,10 +1,10 @@
 "use client"
 
 import * as React from "react"
-import { Camera, Sparkles, User, X } from "lucide-react"
+import { Camera, Sparkles, User, Calendar as CalendarIcon } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Card, FieldRow, Toast, type StatusMsg } from "./settings-ui"
+import { Card, FieldRow, DateField, Toast, type StatusMsg } from "./settings-ui"
 
 interface ProfilePanelProps {
     displayName: string
@@ -25,6 +25,12 @@ interface ProfilePanelProps {
     setDisplayName: (v: string) => void
     setNameMsg: (v: StatusMsg) => void
     onSaveName: () => void
+    // DOB
+    dob: string
+    onDobChange: (v: string) => void
+    onSaveProfile: () => void
+    profileSaving: boolean
+    profileMsg: StatusMsg
 }
 
 export function ProfilePanel({
@@ -33,19 +39,15 @@ export function ProfilePanel({
     avatarInputRef, onAvatarPick, onSaveAvatar, onCancelAvatar,
     onRemoveAvatar,
     nameSaving, nameMsg, setDisplayName, setNameMsg, onSaveName,
+    dob, onDobChange, onSaveProfile, profileSaving, profileMsg,
 }: ProfilePanelProps) {
 
-    // 🔥 Toast animation state
     const [showToast, setShowToast] = React.useState(false)
 
     React.useEffect(() => {
         if (avatarMsg) {
             setShowToast(true)
-
-            const t1 = setTimeout(() => {
-                setShowToast(false)
-            }, 1800)
-
+            const t1 = setTimeout(() => setShowToast(false), 1800)
             return () => clearTimeout(t1)
         }
     }, [avatarMsg])
@@ -68,7 +70,6 @@ export function ProfilePanel({
                     </svg>
                 </div>
 
-                {/* 🔥 FIXED TOAST (animate in + out) */}
                 {avatarMsg && (
                     <div
                         className={`
@@ -91,7 +92,6 @@ export function ProfilePanel({
                         <div className="size-[78px] rounded-2xl overflow-hidden
               ring-2 ring-white/[0.10] ring-offset-2 ring-offset-[#111]
               shadow-md">
-
                             {avatarLoading ? (
                                 <div className="size-full bg-white/[0.06] animate-pulse flex items-center justify-center">
                                     <Camera className="size-5 text-white/20" />
@@ -128,7 +128,6 @@ export function ProfilePanel({
 
                     {/* Info */}
                     <div className="flex flex-col justify-center min-w-0 flex-1 py-1">
-
                         <p className="text-[20px] md:text-[22px] font-extrabold tracking-tight leading-snug truncate
                         bg-gradient-to-r from-white via-white/95 to-white/70 bg-clip-text text-transparent
                         drop-shadow-[0_2px_6px_rgba(0,0,0,0.6)]">
@@ -136,16 +135,11 @@ export function ProfilePanel({
                         </p>
 
                         <div className="flex items-center gap-2 mt-1">
-                            <span className="text-[13px] text-white/60 truncate font-medium">
-                                {email}
-                            </span>
+                            <span className="text-[13px] text-white/60 truncate font-medium">{email}</span>
                             <span className="size-1.5 rounded-full bg-emerald-400 shadow-[0_0_6px_rgba(16,185,129,0.6)]" />
-                            <span className="text-[12px] text-emerald-400 font-semibold">
-                                Verified
-                            </span>
+                            <span className="text-[12px] text-emerald-400 font-semibold">Verified</span>
                         </div>
 
-                        {/* Buttons */}
                         <div className="flex gap-2 mt-3 flex-wrap items-center">
                             {!avatarFile && !avatarSaving && (
                                 <>
@@ -217,7 +211,7 @@ export function ProfilePanel({
                 </div>
             </Card>
 
-            {/* ── Name + Email Card ── */}
+            {/* ── Name + Email + DOB Card ── */}
             <Card>
                 <FieldRow icon={Sparkles} label="Display Name" description="Shown across the entire app. 32 characters max.">
                     <div className="space-y-2">
@@ -236,7 +230,6 @@ export function ProfilePanel({
                                 {nameSaving ? "Saving..." : "Save"}
                             </Button>
                         </div>
-
                         <Toast msg={nameMsg} />
                     </div>
                 </FieldRow>
@@ -246,7 +239,35 @@ export function ProfilePanel({
                 <FieldRow icon={User} label="Email Address" description="Your login email.">
                     <Input value={email} disabled className="h-10 text-[14px] font-medium opacity-30 bg-white/[0.02] rounded-lg" />
                 </FieldRow>
+
+                <div className="h-px bg-white/[0.06] mx-6" />
+
+                <FieldRow
+                    icon={CalendarIcon}
+                    label="Date of Birth"
+                    description="Private — used for age-based insights only."
+                >
+                    <DateField value={dob} onChange={onDobChange} />
+                </FieldRow>
             </Card>
+
+            {/* Save profile button — only shown once a DOB is set */}
+            {dob && (
+                <div className="flex items-center gap-3 pt-1">
+                    <Button
+                        onClick={onSaveProfile}
+                        disabled={profileSaving}
+                        className="cursor-pointer h-10 px-8 bg-white text-black hover:bg-white/90 border-0 font-semibold"
+                    >
+                        {profileSaving
+                            ? <><span className="size-4 rounded-full border-2 border-black/20 border-t-black animate-spin mr-2" />Saving…</>
+                            : <>Save Profile</>
+                        }
+                    </Button>
+                    <Toast msg={profileMsg} />
+                </div>
+            )}
+
         </div>
     )
 }

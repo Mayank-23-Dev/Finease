@@ -10,6 +10,7 @@ export type Budget = {
   amount:       number
   spent:        number
   month:        string
+  duration:     string  // ← NEW
   created_at?:  string
 }
 
@@ -37,7 +38,6 @@ export function useBudgets() {
 
     if (bErr) { setError(bErr.message); setLoading(false); return }
 
-    // ✅ FIX: compute the actual last day of the month instead of hardcoding 31
     const [year, mon] = month.split("-").map(Number)
     const lastDay = new Date(year, mon, 0).getDate()
 
@@ -58,21 +58,25 @@ export function useBudgets() {
 
     const enriched: Budget[] = (budgetRows || []).map((b) => ({
       ...b,
-      amount: Number(b.amount),
-      spent:  spentMap[b.category] ?? 0,
+      amount:   Number(b.amount),
+      spent:    spentMap[b.category] ?? 0,
+      duration: b.duration ?? "monthly",  // ← NEW: fallback for old rows
     }))
 
     setBudgets(enriched)
     setLoading(false)
   }, [user])
 
-  const addBudget = async ({ category, amount }: { category: string; amount: number }) => {
+  // ← duration added to signature
+  const addBudget = async ({
+    category, amount, duration,
+  }: { category: string; amount: number; duration: string }) => {
     if (!user) return { error: "Not logged in" }
 
     const { data, error } = await supabase
       .from("budgets")
       .upsert(
-        { firebase_uid: user.uid, category, amount, month: selectedMonth },
+        { firebase_uid: user.uid, category, amount, month: selectedMonth, duration },
         { onConflict: "firebase_uid,category,month" }
       )
       .select()
@@ -83,12 +87,16 @@ export function useBudgets() {
     return { data }
   }
 
-  const updateBudget = async (id: string, updates: { category: string; amount: number }) => {
+  // ← duration added to signature
+  const updateBudget = async (
+    id: string,
+    updates: { category: string; amount: number; duration: string }
+  ) => {
     if (!user) return { error: "Not logged in" }
 
     const { data, error } = await supabase
       .from("budgets")
-      .update({ category: updates.category, amount: updates.amount })
+      .update({ category: updates.category, amount: updates.amount, duration: updates.duration })
       .eq("id", id)
       .eq("firebase_uid", user.uid)
       .select()
@@ -118,7 +126,7 @@ export function useBudgets() {
     addBudget,
     updateBudget,
     deleteBudget,
-    refetch:      () => fetchBudgets(selectedMonth),
+    refetch: () => fetchBudgets(selectedMonth),
     selectedMonth,
     setSelectedMonth,
   }

@@ -10,74 +10,60 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/Dashboard_UI/label"
 import { Calendar } from "@/components/ui/calendar"
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
+  Dialog, DialogContent, DialogDescription,
+  DialogFooter, DialogHeader, DialogTitle,
 } from "@/components/ui/dialog"
 import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
+  Popover, PopoverContent, PopoverTrigger,
 } from "@/components/ui/popover"
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
+  Select, SelectContent, SelectItem, SelectSeparator,
+  SelectTrigger, SelectValue,
 } from "@/components/ui/Dashboard_UI/select"
-
 import type { Transaction } from "@/components/hooks/use-transactions"
 
 type TransactionUpdate = Omit<Transaction, "id" | "firebase_uid" | "created_at">
 
-interface EditTransactionDialogProps {
-  transaction: Transaction
-  open: boolean
-  onOpenChange: (open: boolean) => void
-  onSave: (id: number, updated: TransactionUpdate) => Promise<void>
-}
-
-const CATEGORIES = [
+const BASE_CATEGORIES = [
   "Income", "Subscription", "Food", "Shopping",
   "Utilities", "Transport", "Health", "Entertainment", "Other",
 ]
 const METHODS = [
-  "Bank Transfer", "Credit Card", "Debit Card",
-  "UPI", "Cash", "Net Banking",
+  "Bank Transfer", "Credit Card", "Debit Card", "UPI", "Cash", "Net Banking",
 ]
 
+interface Props {
+  transaction:        Transaction
+  open:               boolean
+  onOpenChange:       (open: boolean) => void
+  onSave:             (id: number, updated: TransactionUpdate) => Promise<void>
+  budgetCategories?:  string[]
+}
+
 export function EditTransactionDialog({
-  transaction,
-  open,
-  onOpenChange,
-  onSave,
-}: EditTransactionDialogProps) {
+  transaction, open, onOpenChange, onSave, budgetCategories = [],
+}: Props) {
   const [form, setForm] = React.useState({
     transaction: transaction.transaction,
-    category: transaction.category,
-    amount: String(transaction.amount),
-    date: parseISO(transaction.date) as Date | undefined,
-    type: transaction.type,
-    method: transaction.method,
-    status: transaction.status,
+    category:    transaction.category,
+    amount:      String(transaction.amount),
+    date:        parseISO(transaction.date) as Date | undefined,
+    type:        transaction.type,
+    method:      transaction.method,
+    status:      transaction.status,
   })
   const [errors, setErrors] = React.useState<Record<string, string>>({})
   const [saving, setSaving] = React.useState(false)
 
-  // Reset form when transaction changes
   React.useEffect(() => {
     setForm({
       transaction: transaction.transaction,
-      category: transaction.category,
-      amount: String(transaction.amount),
-      date: parseISO(transaction.date),
-      type: transaction.type,
-      method: transaction.method,
-      status: transaction.status,
+      category:    transaction.category,
+      amount:      String(transaction.amount),
+      date:        parseISO(transaction.date),
+      type:        transaction.type,
+      method:      transaction.method,
+      status:      transaction.status,
     })
     setErrors({})
   }, [transaction])
@@ -90,32 +76,27 @@ export function EditTransactionDialog({
   const validate = () => {
     const e: Record<string, string> = {}
     if (!form.transaction.trim()) e.transaction = "Required"
-    if (!form.category) e.category = "Required"
-    if (!form.amount || isNaN(Number(form.amount)) || Number(form.amount) <= 0)
-      e.amount = "Enter a valid amount"
-    if (!form.date) e.date = "Required"
-    if (!form.type) e.type = "Required"
+    if (!form.category)           e.category    = "Required"
+    if (!form.amount || isNaN(Number(form.amount)) || Number(form.amount) <= 0) e.amount = "Enter a valid amount"
+    if (!form.date)   e.date   = "Required"
+    if (!form.type)   e.type   = "Required"
     if (!form.method) e.method = "Required"
     return e
   }
 
   const handleSubmit = async () => {
     const newErrors = validate()
-    if (Object.keys(newErrors).length > 0) {
-      setErrors(newErrors)
-      return
-    }
-
+    if (Object.keys(newErrors).length > 0) { setErrors(newErrors); return }
     setSaving(true)
     try {
       await onSave(transaction.id, {
         transaction: form.transaction.trim(),
-        category: form.category,
-        amount: Number(form.amount),
-        date: format(form.date!, "yyyy-MM-dd"),
-        type: form.type,
-        method: form.method,
-        status: form.status,
+        category:    form.category,
+        amount:      Number(form.amount),
+        date:        format(form.date!, "yyyy-MM-dd"),
+        type:        form.type,
+        method:      form.method,
+        status:      form.status,
       })
       onOpenChange(false)
     } catch (err) {
@@ -125,14 +106,17 @@ export function EditTransactionDialog({
     }
   }
 
+  // Category split: budgeted on top, rest below
+  const budgetedInList   = BASE_CATEGORIES.filter((c) => budgetCategories.includes(c))
+  const unbudgetedInList = BASE_CATEGORIES.filter((c) => !budgetCategories.includes(c))
+  const customBudgeted   = budgetCategories.filter((c) => !BASE_CATEGORIES.includes(c))
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[480px]">
         <DialogHeader>
           <DialogTitle>Edit Transaction</DialogTitle>
-          <DialogDescription>
-            Update the details below to modify this transaction.
-          </DialogDescription>
+          <DialogDescription>Update the details below to modify this transaction.</DialogDescription>
         </DialogHeader>
 
         <div className="flex flex-col gap-4 py-1">
@@ -146,9 +130,7 @@ export function EditTransactionDialog({
               value={form.transaction}
               onChange={(e) => update("transaction", e.target.value)}
             />
-            {errors.transaction && (
-              <p className="text-xs text-red-400">{errors.transaction}</p>
-            )}
+            {errors.transaction && <p className="text-xs text-red-400">{errors.transaction}</p>}
           </div>
 
           {/* Category + Type */}
@@ -160,14 +142,29 @@ export function EditTransactionDialog({
                   <SelectValue placeholder="Select category" />
                 </SelectTrigger>
                 <SelectContent position="popper" sideOffset={4}>
-                  {CATEGORIES.map((c) => (
+
+                  {/* Budgeted first */}
+                  {(budgetedInList.length > 0 || customBudgeted.length > 0) && (
+                    <>
+                      <div className="px-2 py-1 text-[10px] text-muted-foreground uppercase tracking-wide">
+                        Budgeted
+                      </div>
+                      {customBudgeted.map((c) => (
+                        <SelectItem key={c} value={c}>{c}</SelectItem>
+                      ))}
+                      {budgetedInList.map((c) => (
+                        <SelectItem key={c} value={c}>{c}</SelectItem>
+                      ))}
+                      <SelectSeparator />
+                    </>
+                  )}
+
+                  {unbudgetedInList.map((c) => (
                     <SelectItem key={c} value={c}>{c}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
-              {errors.category && (
-                <p className="text-xs text-red-400">{errors.category}</p>
-              )}
+              {errors.category && <p className="text-xs text-red-400">{errors.category}</p>}
             </div>
 
             <div className="flex flex-col gap-1.5">
@@ -181,9 +178,7 @@ export function EditTransactionDialog({
                   <SelectItem value="Debit">Debit</SelectItem>
                 </SelectContent>
               </Select>
-              {errors.type && (
-                <p className="text-xs text-red-400">{errors.type}</p>
-              )}
+              {errors.type && <p className="text-xs text-red-400">{errors.type}</p>}
             </div>
           </div>
 
@@ -198,9 +193,7 @@ export function EditTransactionDialog({
                 value={form.amount}
                 onChange={(e) => update("amount", e.target.value)}
               />
-              {errors.amount && (
-                <p className="text-xs text-red-400">{errors.amount}</p>
-              )}
+              {errors.amount && <p className="text-xs text-red-400">{errors.amount}</p>}
             </div>
 
             <div className="flex flex-col gap-1.5">
@@ -211,29 +204,15 @@ export function EditTransactionDialog({
                     type="button"
                     className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 text-sm ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50"
                   >
-                    {form.date ? format(form.date, "dd MMM yyyy") : (
-                      <span className="text-muted-foreground">Pick a date</span>
-                    )}
+                    {form.date ? format(form.date, "dd MMM yyyy") : <span className="text-muted-foreground">Pick a date</span>}
                     <ChevronDownIcon className="size-4 opacity-60" />
                   </button>
                 </PopoverTrigger>
-                <PopoverContent
-                  side="top"
-                  align="start"
-                  avoidCollisions={false}
-                  className="w-auto p-0 z-50"
-                >
-                  <Calendar
-                    mode="single"
-                    selected={form.date}
-                    onSelect={(d) => update("date", d)}
-                    defaultMonth={form.date}
-                  />
+                <PopoverContent side="top" align="start" avoidCollisions={false} className="w-auto p-0 z-50">
+                  <Calendar mode="single" selected={form.date} onSelect={(d) => update("date", d)} defaultMonth={form.date} />
                 </PopoverContent>
               </Popover>
-              {errors.date && (
-                <p className="text-xs text-red-400">{errors.date}</p>
-              )}
+              {errors.date && <p className="text-xs text-red-400">{errors.date}</p>}
             </div>
           </div>
 
@@ -242,26 +221,18 @@ export function EditTransactionDialog({
             <div className="flex flex-col gap-1.5">
               <Label>Payment Method</Label>
               <Select value={form.method} onValueChange={(v) => update("method", v)}>
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Select method" />
-                </SelectTrigger>
+                <SelectTrigger className="w-full"><SelectValue placeholder="Select method" /></SelectTrigger>
                 <SelectContent position="popper" sideOffset={4}>
-                  {METHODS.map((m) => (
-                    <SelectItem key={m} value={m}>{m}</SelectItem>
-                  ))}
+                  {METHODS.map((m) => <SelectItem key={m} value={m}>{m}</SelectItem>)}
                 </SelectContent>
               </Select>
-              {errors.method && (
-                <p className="text-xs text-red-400">{errors.method}</p>
-              )}
+              {errors.method && <p className="text-xs text-red-400">{errors.method}</p>}
             </div>
 
             <div className="flex flex-col gap-1.5">
               <Label>Status</Label>
               <Select value={form.status} onValueChange={(v) => update("status", v)}>
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Select status" />
-                </SelectTrigger>
+                <SelectTrigger className="w-full"><SelectValue /></SelectTrigger>
                 <SelectContent position="popper" sideOffset={4}>
                   <SelectItem value="Completed">Completed</SelectItem>
                   <SelectItem value="Pending">Pending</SelectItem>

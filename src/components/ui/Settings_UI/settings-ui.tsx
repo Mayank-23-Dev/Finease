@@ -3,10 +3,12 @@
 
 import * as React from "react"
 import { format } from "date-fns"
-import { ChevronDownIcon, Check, AlertTriangle, Eye, EyeOff } from "lucide-react"
-import { Button }   from "@/components/ui/button"
-import { Input }    from "@/components/ui/input"
-import { Calendar } from "@/components/ui/calendar"
+import {
+  ChevronDownIcon, ChevronLeftIcon, ChevronRightIcon,
+  Check, AlertTriangle, Eye, EyeOff,
+} from "lucide-react"
+import { Button } from "@/components/ui/button"
+import { Input }  from "@/components/ui/input"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import {
   DropdownMenu, DropdownMenuTrigger,
@@ -22,8 +24,7 @@ export function Toast({ msg }: { msg: StatusMsg }) {
     <div className={`inline-flex items-center gap-2 text-xs px-3 py-1.5 rounded-full font-medium border
       ${msg.type === "success"
         ? "bg-white/[0.08] text-white border-white/20"
-        : "bg-white/[0.04] text-white/50 border-white/10"
-      }`}>
+        : "bg-white/[0.04] text-white/50 border-white/10"}`}>
       {msg.type === "success"
         ? <Check className="size-3 text-white" />
         : <AlertTriangle className="size-3 text-white/50" />}
@@ -33,9 +34,7 @@ export function Toast({ msg }: { msg: StatusMsg }) {
 }
 
 // ── Card ──────────────────────────────────────────────────────────────────────
-export function Card({
-  children, className = "", danger = false,
-}: {
+export function Card({ children, className = "", danger = false }: {
   children: React.ReactNode; className?: string; danger?: boolean
 }) {
   return (
@@ -47,34 +46,23 @@ export function Card({
   )
 }
 
-// ── FieldRow (FIXED ONLY THIS) ────────────────────────────────────────────────
-export function FieldRow({
-  icon: Icon, label, description, children,
-}: {
+// ── FieldRow ──────────────────────────────────────────────────────────────────
+export function FieldRow({ icon: Icon, label, description, children }: {
   icon: React.ElementType; label: string; description?: string; children: React.ReactNode
 }) {
   return (
     <div className="flex items-center justify-between gap-4 py-4 px-5
       border-b border-white/[0.05] last:border-0 hover:bg-white/[0.02] transition-colors">
-
-      {/* LEFT */}
       <div className="flex items-start gap-3">
         <div className="mt-0.5 p-1.5 rounded-lg bg-white/[0.06] text-white/40">
           <Icon className="size-3.5" />
         </div>
         <div>
           <p className="text-sm font-medium text-white/80 leading-tight">{label}</p>
-          {description && (
-            <p className="text-xs text-white/30 mt-0.5 leading-relaxed">{description}</p>
-          )}
+          {description && <p className="text-xs text-white/30 mt-0.5 leading-relaxed">{description}</p>}
         </div>
       </div>
-
-      {/* RIGHT */}
-      <div className="flex items-center">
-        {children}
-      </div>
-
+      <div className="flex items-center">{children}</div>
     </div>
   )
 }
@@ -89,18 +77,15 @@ export function SectionLabel({ children }: { children: React.ReactNode }) {
 }
 
 // ── SelectDropdown ────────────────────────────────────────────────────────────
-export function SelectDropdown({
-  value, options, onChange, placeholder,
-}: {
+export function SelectDropdown({ value, options, onChange, placeholder }: {
   value: string; options: string[]; onChange: (val: string) => void; placeholder?: string
 }) {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="outline"
-          className="w-full justify-between font-normal cursor-pointer h-10
-            bg-white/[0.04] border-white/[0.08] hover:bg-white/[0.07] hover:border-white/20
-            text-white/70 transition-all">
+        <Button variant="outline" className="w-full justify-between font-normal cursor-pointer h-10
+          bg-white/[0.04] border-white/[0.08] hover:bg-white/[0.07] hover:border-white/20
+          text-white/70 transition-all">
           {value || placeholder || "Select..."}
           <ChevronDownIcon className="size-4 opacity-30" />
         </Button>
@@ -118,33 +103,245 @@ export function SelectDropdown({
   )
 }
 
+// ── CaptionSelect ─────────────────────────────────────────────────────────────
+function CaptionSelect({ value, options, onChange }: {
+  value: number
+  options: { label: string; value: number }[]
+  onChange: (val: number) => void
+}) {
+  const [open, setOpen] = React.useState(false)
+  const ref = React.useRef<HTMLDivElement>(null)
+
+  React.useEffect(() => {
+    if (!open) return
+    const handler = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false)
+    }
+    document.addEventListener("mousedown", handler)
+    return () => document.removeEventListener("mousedown", handler)
+  }, [open])
+
+  React.useEffect(() => {
+    if (!open || !ref.current) return
+    const el = ref.current.querySelector("[data-active='true']") as HTMLElement | null
+    el?.scrollIntoView({ block: "center" })
+  }, [open])
+
+  const selected = options.find((o) => o.value === value)
+
+  return (
+    <div ref={ref} className="relative">
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        className="inline-flex items-center gap-1 h-7 px-2.5 rounded-md cursor-pointer
+          bg-white/[0.06] hover:bg-white/[0.11] border border-white/[0.14] hover:border-white/25
+          text-sm font-semibold text-white/90 transition-all outline-none select-none"
+      >
+        {selected?.label ?? value}
+        <ChevronDownIcon className={`size-3 opacity-40 transition-transform duration-150 ${open ? "rotate-180" : ""}`} />
+      </button>
+
+      {open && (
+        <div className="absolute top-full mt-1 left-0 z-[9999]
+          min-w-[7rem] max-h-52 overflow-y-auto
+          rounded-xl border border-white/[0.10] bg-[#161616] shadow-2xl py-1
+          [&::-webkit-scrollbar]:w-[3px]
+          [&::-webkit-scrollbar-thumb]:rounded-full
+          [&::-webkit-scrollbar-thumb]:bg-white/20">
+          {options.map((opt) => {
+            const active = opt.value === value
+            return (
+              <button
+                key={opt.value}
+                type="button"
+                data-active={active}
+                onMouseDown={(e) => { e.preventDefault(); onChange(opt.value); setOpen(false) }}
+                className={`w-full text-left px-3 py-1.5 text-sm cursor-pointer transition-colors
+                  ${active ? "text-white font-semibold bg-white/[0.08]" : "text-white/50 hover:text-white hover:bg-white/[0.05]"}`}
+              >
+                {opt.label}
+              </button>
+            )
+          })}
+        </div>
+      )}
+    </div>
+  )
+}
+
+// ── MiniCalendar — fully hand-rolled, zero DayPicker ─────────────────────────
+const WEEK_DAYS = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"]
+const MONTHS    = ["January","February","March","April","May","June","July","August","September","October","November","December"]
+
+function getDaysInMonth(year: number, month: number) {
+  return new Date(year, month + 1, 0).getDate()
+}
+function getFirstDayOfWeek(year: number, month: number) {
+  return new Date(year, month, 1).getDay()
+}
+function isSameDay(a: Date, b: Date) {
+  return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate()
+}
+
+function MiniCalendar({ selected, maxDate, onSelect }: {
+  selected: Date | undefined
+  maxDate: Date
+  onSelect: (d: Date) => void
+}) {
+  const today = new Date()
+  const [viewYear,  setViewYear]  = React.useState(selected?.getFullYear()  ?? today.getFullYear())
+  const [viewMonth, setViewMonth] = React.useState(selected?.getMonth()     ?? today.getMonth())
+
+  const currentYear = today.getFullYear()
+  const fromYear    = currentYear - 100
+  const yearOptions  = Array.from({ length: 101 }, (_, i) => ({ label: String(fromYear + i), value: fromYear + i }))
+  const monthOptions = MONTHS.map((label, i) => ({ label, value: i }))
+
+  const daysInMonth  = getDaysInMonth(viewYear, viewMonth)
+  const firstWeekDay = getFirstDayOfWeek(viewYear, viewMonth)
+
+  const prevMonth = () => {
+    if (viewMonth === 0) { setViewMonth(11); setViewYear((y) => y - 1) }
+    else setViewMonth((m) => m - 1)
+  }
+  const nextMonth = () => {
+    if (viewMonth === 11) { setViewMonth(0); setViewYear((y) => y + 1) }
+    else setViewMonth((m) => m + 1)
+  }
+
+  const cells: (number | null)[] = [
+    ...Array(firstWeekDay).fill(null),
+    ...Array.from({ length: daysInMonth }, (_, i) => i + 1),
+  ]
+  // Pad to full weeks
+  while (cells.length % 7 !== 0) cells.push(null)
+
+  return (
+    <div className="p-3 w-[240px]">
+      {/* Caption */}
+      <div className="flex items-center justify-between mb-3">
+        <button type="button" onClick={prevMonth}
+          className="p-1.5 rounded-md hover:bg-white/[0.07] text-white/40 hover:text-white/80 transition-colors">
+          <ChevronLeftIcon className="size-4" />
+        </button>
+
+        <div className="flex items-center gap-1.5">
+          <CaptionSelect
+            value={viewMonth}
+            options={monthOptions}
+            onChange={(m) => setViewMonth(m)}
+          />
+          <CaptionSelect
+            value={viewYear}
+            options={yearOptions}
+            onChange={(y) => setViewYear(y)}
+          />
+        </div>
+
+        <button type="button" onClick={nextMonth}
+          className="p-1.5 rounded-md hover:bg-white/[0.07] text-white/40 hover:text-white/80 transition-colors">
+          <ChevronRightIcon className="size-4" />
+        </button>
+      </div>
+
+      {/* Week headers */}
+      <div className="grid grid-cols-7 mb-1">
+        {WEEK_DAYS.map((d) => (
+          <div key={d} className="h-8 flex items-center justify-center text-[11px] font-medium text-white/25">
+            {d}
+          </div>
+        ))}
+      </div>
+
+      {/* Day grid */}
+      <div className="grid grid-cols-7">
+        {cells.map((day, i) => {
+          if (!day) return <div key={`empty-${i}`} className="h-8" />
+          const thisDate   = new Date(viewYear, viewMonth, day)
+          const isSelected = selected && isSameDay(thisDate, selected)
+          const isToday    = isSameDay(thisDate, today)
+          const isDisabled = thisDate > maxDate
+
+          return (
+            <button
+              key={day}
+              type="button"
+              disabled={isDisabled}
+              onClick={() => !isDisabled && onSelect(thisDate)}
+              className={`h-8 w-full rounded-md text-sm transition-colors
+                flex items-center justify-center
+                ${isDisabled
+                  ? "text-white/15 cursor-not-allowed"
+                  : isSelected
+                    ? "bg-white text-black font-semibold"
+                    : isToday
+                      ? "text-white font-semibold hover:bg-white/[0.08]"
+                      : "text-white/60 hover:bg-white/[0.08] hover:text-white cursor-pointer"
+                }`}
+            >
+              {day}
+            </button>
+          )
+        })}
+      </div>
+    </div>
+  )
+}
+
 // ── DateField ─────────────────────────────────────────────────────────────────
 export function DateField({ value, onChange }: { value: string; onChange: (v: string) => void }) {
-  const date = value ? new Date(value) : undefined
+  const parseLocalDate = (str: string): Date | undefined => {
+    if (!str) return undefined
+    const [y, m, d] = str.split("-").map(Number)
+    if (!y || !m || !d) return undefined
+    return new Date(y, m - 1, d)
+  }
+
+  const [open, setOpen] = React.useState(false)
+  const date = parseLocalDate(value)
+
+  const handleSelect = (d: Date) => {
+    const yyyy = d.getFullYear()
+    const mm   = String(d.getMonth() + 1).padStart(2, "0")
+    const dd   = String(d.getDate()).padStart(2, "0")
+    onChange(`${yyyy}-${mm}-${dd}`)
+    setOpen(false)
+  }
+
   return (
-    <Popover>
+    <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
-        <Button variant="outline" data-empty={!date}
+        <Button
+          variant="outline"
+          data-empty={!date}
           className="w-full justify-between font-normal cursor-pointer h-10
             bg-white/[0.04] border-white/[0.08] hover:bg-white/[0.07] hover:border-white/20
-            text-white/70 data-[empty=true]:text-white/25 transition-all">
+            text-white/70 data-[empty=true]:text-white/25 transition-all"
+        >
           {date ? format(date, "PPP") : "Pick a date"}
           <ChevronDownIcon className="size-4 opacity-30" />
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-auto p-0" align="start">
-        <Calendar mode="single" selected={date}
-          onSelect={(d) => onChange(d ? d.toISOString().split("T")[0] : "")}
-          defaultMonth={date} captionLayout="dropdown" />
+
+      <PopoverContent
+        className="w-auto p-0 overflow-visible bg-[#111] border-white/[0.08]"
+        align="start"
+        side="top"
+        sideOffset={8}
+      >
+        <MiniCalendar
+          selected={date}
+          maxDate={new Date()}
+          onSelect={handleSelect}
+        />
       </PopoverContent>
     </Popover>
   )
 }
 
 // ── PasswordInput ─────────────────────────────────────────────────────────────
-export function PasswordInput({
-  value, onChange, placeholder,
-}: {
+export function PasswordInput({ value, onChange, placeholder }: {
   value: string; onChange: (v: string) => void; placeholder?: string
 }) {
   const [show, setShow] = React.useState(false)
