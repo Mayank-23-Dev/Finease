@@ -2,6 +2,7 @@
 "use client"
 
 import * as React from "react"
+import { useNavigate } from "react-router-dom"
 import { DataTable } from "@/components/ui/Transaction_UI/data-table"
 import { TransactionFiltersBar, type TransactionFilters } from "@/components/ui/Transaction_UI/transaction-filters"
 import { AddTransactionDialog } from "@/components/ui/Transaction_UI/add-transaction-dialog"
@@ -15,9 +16,10 @@ export default function TransactionsPage() {
   const { transactions, loading, addTransaction, updateTransaction, deleteTransaction } =
     useTransactions()
 
-  // ← pull budgets so we can pass categories to dialogs
   const { budgets, addBudget } = useBudgets()
   const budgetCategories = budgets.map((b) => b.category)
+
+  const navigate = useNavigate()
 
   const [filters, setFilters] = React.useState<TransactionFilters>({
     search: "", category: "", type: "", status: "", method: "", dateFrom: "", dateTo: "",
@@ -66,6 +68,10 @@ export default function TransactionsPage() {
     await deleteTransaction(id)
   }
 
+  const handleNavigateToAI = (seedMessage: string) => {
+    navigate("/dashboard/ai-assistant", { state: { seedMessage } })
+  }
+
   return (
     <div className="@container/main flex flex-1 flex-col gap-2">
       <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-6">
@@ -77,11 +83,11 @@ export default function TransactionsPage() {
               {loading ? "Loading..." : `${filtered.length} transaction${filtered.length !== 1 ? "s" : ""} found`}
             </p>
           </div>
-          {/* ← pass budgetCategories and addBudget */}
           <AddTransactionDialog
             onAdd={handleAddTransaction}
             budgetCategories={budgetCategories}
             onAddBudget={addBudget}
+            onNavigateToAI={handleNavigateToAI}
           />
         </div>
 
@@ -96,7 +102,7 @@ export default function TransactionsPage() {
             data={filtered}
             onEdit={handleEditTransaction}
             onDelete={handleDeleteTransaction}
-            budgetCategories={budgetCategories}  // ← for edit dialog inside table
+            budgetCategories={budgetCategories}
           />
         )}
       </div>

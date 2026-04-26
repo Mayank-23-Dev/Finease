@@ -1,20 +1,25 @@
 // src/components/Pages/AIAssistantPage.tsx
 "use client"
 
-import { ChatWindow }       from "@/components/ui/AIAssistant_UI/chat-window"
-import { ChatInput }        from "@/components/ui/AIAssistant_UI/chat-input"
-import { SuggestedPrompts } from "@/components/ui/AIAssistant_UI/suggested-prompts"
-import { useAIChat }        from "@/components/hooks/use-ai-chat"
-import { useChatStore }     from "@/components/hooks/use-chat-store"
-import { useTransactions }  from "@/components/hooks/use-transactions"
-import { useBudgets }       from "@/components/hooks/use-budgets"
-import { useAuth }          from "@/components/hooks/use-auth"
-import { Bot }              from "lucide-react"
+import { useEffect, useRef } from "react"
+import { useLocation }       from "react-router-dom"
+import { ChatWindow }        from "@/components/ui/AIAssistant_UI/chat-window"
+import { ChatInput }         from "@/components/ui/AIAssistant_UI/chat-input"
+import { SuggestedPrompts }  from "@/components/ui/AIAssistant_UI/suggested-prompts"
+import { useAIChat }         from "@/components/hooks/use-ai-chat"
+import { useChatStore }      from "@/components/hooks/use-chat-store"
+import { useTransactions }   from "@/components/hooks/use-transactions"
+import { useBudgets }        from "@/components/hooks/use-budgets"
+import { useAuth }           from "@/components/hooks/use-auth"
+import { Bot }               from "lucide-react"
 
 export default function AIAssistantPage() {
   const { transactions, addTransaction } = useTransactions()
   const { budgets }                      = useBudgets()
   const { user }                         = useAuth()
+  const location                         = useLocation()
+  // Ref guard so the seed fires exactly once even in React StrictMode double-invoke
+  const seedFiredRef                     = useRef(false)
 
   const {
     messages, setMessages,
@@ -34,6 +39,17 @@ export default function AIAssistantPage() {
     setGuidedStep,
   })
 
+  // Send bulk-import seed message exactly once when navigated here from the dialog.
+  // The ref guard prevents StrictMode's double-invoke and any re-mount from firing twice.
+  useEffect(() => {
+    const seed = (location.state as { seedMessage?: string } | null)?.seedMessage
+    if (!seed || seedFiredRef.current) return
+    seedFiredRef.current = true
+    // Wipe state from history immediately so back/forward nav never re-triggers this
+    window.history.replaceState({}, "")
+    sendMessage(seed)
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
   const userAvatar   = user?.photoURL ?? null
   const userInitials = (user?.displayName ?? user?.email ?? "U")
     .split(" ").map((w) => w[0]).slice(0, 2).join("").toUpperCase()
@@ -45,7 +61,6 @@ export default function AIAssistantPage() {
         {/* Header */}
         <div className="flex items-center justify-between px-4 lg:px-6 py-3.5 border-b border-white/[0.07] shrink-0">
           <div className="flex items-center gap-3">
-            {/* AI avatar */}
             <div className="size-8 rounded-full bg-violet-500/10 border border-violet-500/20 flex items-center justify-center">
               <Bot size={15} className="text-violet-400" />
             </div>
