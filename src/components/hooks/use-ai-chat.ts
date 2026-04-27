@@ -1,9 +1,10 @@
 // src/components/hooks/use-ai-chat.ts
-import { useState } from "react"
+import { useState }          from "react"
 import type { Dispatch, SetStateAction } from "react"
-import { format } from "date-fns"
-import type { Transaction } from "@/components/hooks/use-transactions"
-import type { Budget }      from "@/components/hooks/use-budgets"
+import { format }            from "date-fns"
+import type { Transaction }  from "@/components/hooks/use-transactions"
+import type { Budget }       from "@/components/hooks/use-budgets"
+import { useAITransaction }  from "@/components/hooks/use-ai-transaction"
 
 export type Message = {
   id:      string
@@ -23,9 +24,6 @@ type TransactionDraft = {
 
 export type GuidedStep = "idle" | "name" | "amount" | "category" | "type" | "method" | "confirm" | "done"
 
-// Bulk flow has two confirmation steps:
-//   "preview"  → show the full list (new + duplicates), ask to add new ones
-//   "dup-ask"  → new ones added, now separately ask about duplicates
 type BulkStep = "preview" | "dup-ask"
 
 type BulkState = {
@@ -52,21 +50,21 @@ interface Props {
 const VALID_CATEGORIES = ["Food", "Shopping", "Transport", "Utilities", "Health", "Entertainment", "Subscription", "Income", "Other"]
 const VALID_METHODS    = ["Cash", "UPI", "Bank Transfer", "Credit Card", "Debit Card", "Net Banking"]
 
-// ── Infer category from name ──────────────────────────────────────────────────
+// ── Infer category from name (fallback) ───────────────────────────────────────
 function inferCategory(name: string): string {
   const n = name.toLowerCase()
   if (/(food|eat|restaurant|lunch|dinner|breakfast|snack|chai|coffee|swiggy|zomato|banana|apple|vegetable|grocery|groceries|sabzi|mandi|biryani|pizza|burger)/i.test(n)) return "Food"
   if (/(uber|ola|auto|bus|metro|train|fuel|petrol|diesel|cab|rapido|rickshaw)/i.test(n))                                                                                  return "Transport"
   if (/(amazon|flipkart|shop|clothes|shoes|shirt|pant|dress|purchase|washing machine|ac|fridge|tv|laptop|mobile)/i.test(n))                                               return "Shopping"
   if (/(electricity|water|internet|wifi|recharge|bill|gas|broadband|postpaid|excitel|airtel|jio fiber|bsnl)/i.test(n))                                                    return "Utilities"
-  if (/(netflix|jiohotstar|hotstar|disney|prime video|prime|spotify|youtube premium|subscription|ott|zee5|sonyliv|jiocinema|crunchyroll|apple tv)/i.test(n))            return "Subscription"
+  if (/(netflix|jiohotstar|hotstar|disney|prime video|prime|spotify|youtube premium|subscription|ott|zee5|sonyliv|jiocinema|crunchyroll|apple tv|mxplayer|mx player)/i.test(n)) return "Subscription"
   if (/(doctor|medicine|hospital|pharmacy|health|gym|fitness|apollo|medplus)/i.test(n))                                                                                   return "Health"
   if (/(movie|game|entertainment|fun|park|show|concert|pvr|inox)/i.test(n))                                                                                               return "Entertainment"
   if (/(salary|income|received|got|earned|freelance|bonus|dividend|interest|rent received)/i.test(n))                                                                     return "Income"
   return "Other"
 }
 
-// ── Extract entity name ───────────────────────────────────────────────────────
+// ── Extract entity name (fallback) ────────────────────────────────────────────
 function extractEntityName(raw: string): string {
   const text = raw.trim()
   const brandPatterns: [RegExp, string][] = [
@@ -77,6 +75,7 @@ function extractEntityName(raw: string): string {
     [/zee5/i, "Zee5"], [/sony\s*liv/i, "SonyLiv"], [/apple\s*tv/i, "Apple TV+"],
     [/crunchyroll/i, "Crunchyroll"], [/swiggy/i, "Swiggy"], [/zomato/i, "Zomato"],
     [/uber/i, "Uber"], [/ola/i, "Ola"], [/rapido/i, "Rapido"],
+    [/mx\s*player/i, "MX Player"],
     [/excitel/i, "Excitel"], [/airtel/i, "Airtel"], [/jio\s*fiber/i, "Jio Fiber"],
     [/bsnl/i, "BSNL"], [/amazon/i, "Amazon"], [/flipkart/i, "Flipkart"],
     [/apollo/i, "Apollo"], [/medplus/i, "MedPlus"],
@@ -211,7 +210,7 @@ function isDuplicate(draft: Partial<TransactionDraft>, existing: Transaction[]):
   )
 }
 
-// ── Bulk preview card — shows new + duplicates, asks for confirmation ─────────
+// ── Bulk preview card ─────────────────────────────────────────────────────────
 function buildBulkPreviewCard(unique: Partial<TransactionDraft>[], duplicates: Partial<TransactionDraft>[]): string {
   const total = unique.length + duplicates.length
   const lines: string[] = []
@@ -242,7 +241,6 @@ function buildBulkPreviewCard(unique: Partial<TransactionDraft>[], duplicates: P
   } else if (unique.length > 0) {
     lines.push(`Shall I add all **${unique.length}** transaction${unique.length > 1 ? "s" : ""}? Reply **yes** to confirm or **no** to cancel.`)
   } else {
-    // All duplicates
     lines.push(`All of these already exist. Add them anyway? Reply **yes** to add all or **no** to skip.`)
   }
 
@@ -382,7 +380,7 @@ function buildConfirmCard(draft: Partial<TransactionDraft>): string {
   )
 }
 
-// ── System prompt ─────────────────────────────────────────────────────────────
+// ── System prompt (Groq / general chat) ──────────────────────────────────────
 function buildSystemPrompt(transactions: Transaction[], budgets: Budget[]): string {
   const now           = new Date()
   const currentMonth  = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`
@@ -397,13 +395,13 @@ function buildSystemPrompt(transactions: Transaction[], budgets: Budget[]): stri
   const monthExpense = thisMonthTx.filter((t) => t.type === "Debit").reduce((s, t) => s + t.amount, 0)
   const lastMonthExp = lastMonthTx.filter((t) => t.type === "Debit").reduce((s, t) => s + t.amount, 0)
 
-  const catMap: Record<string, number> = {}
-  thisMonthTx.filter((t) => t.type === "Debit").forEach((t) => { catMap[t.category] = (catMap[t.category] ?? 0) + t.amount })
-  const catStr      = Object.entries(catMap).sort((a, b) => b[1] - a[1]).map(([c, a]) => `  • ${c}: ₹${a.toLocaleString("en-IN")}`).join("\n") || "  No expense data"
   const budgetLines = budgets.length
     ? budgets.map((b) => { const pct = b.amount > 0 ? Math.round((b.spent / b.amount) * 100) : 0; return `  • ${b.category}: ₹${b.spent.toLocaleString("en-IN")} / ₹${b.amount.toLocaleString("en-IN")} (${pct}%)${b.spent > b.amount ? " ⚠️ OVER" : pct > 75 ? " ⚡ near limit" : ""}` }).join("\n")
     : "  No budgets set"
-  const recentLines = transactions.slice(0, 15).map((t) => `  ${t.date} | ${t.transaction} | ${t.type === "Credit" ? "+" : "-"}₹${t.amount.toLocaleString("en-IN")} | ${t.category} | ${t.method}`).join("\n") || "  No transactions yet"
+
+  const recentLines = transactions
+    .map((t) => `  ${t.date} | ${t.transaction} | ${t.type === "Credit" ? "+" : "-"}₹${t.amount.toLocaleString("en-IN")} | ${t.category} | ${t.method}`)
+    .join("\n") || "  No transactions yet"
 
   return `You are FinEase AI, a smart and friendly personal finance assistant for Indian users.
 
@@ -411,12 +409,11 @@ function buildSystemPrompt(transactions: Transaction[], budgets: Budget[]): stri
 Overall: Income ₹${totalIncome.toLocaleString("en-IN")} | Expenses ₹${totalExpense.toLocaleString("en-IN")} | Balance ₹${(totalIncome - totalExpense).toLocaleString("en-IN")}
 This month (${currentMonth}): Income ₹${monthIncome.toLocaleString("en-IN")} | Expenses ₹${monthExpense.toLocaleString("en-IN")} | Saved ₹${(monthIncome - monthExpense).toLocaleString("en-IN")}
 Last month expenses: ₹${lastMonthExp.toLocaleString("en-IN")}
-Categories:\n${catStr}
 Budgets:\n${budgetLines}
-Recent:\n${recentLines}
+All transactions:\n${recentLines}
 
 ━━━ RULES ━━━
-1. Real data only. Use ₹ Indian numbering.
+1. Real data only — compute category totals yourself from the transactions above. Use ₹ Indian numbering.
 2. Short for casual, bullets for lists, structured for analysis.
 3. Bold key numbers/names only.
 4. Warm and practical — Indian context (UPI, EMI, SIP).
@@ -424,7 +421,7 @@ Recent:\n${recentLines}
 6. NEVER add transactions yourself — the app handles DB writes.`
 }
 
-// ── Groq ──────────────────────────────────────────────────────────────────────
+// ── Groq (general chat) ───────────────────────────────────────────────────────
 const GROQ_API_URL = "https://api.groq.com/openai/v1/chat/completions"
 const GROQ_MODEL   = "llama-3.1-8b-instant"
 
@@ -482,6 +479,9 @@ export function useAIChat({
   const [loading,   setLoading]   = useState(false)
   const [bulkState, setBulkState] = useState<BulkState | null>(null)
 
+  // GPT-4o-mini for guided transaction name parsing
+  const { parseTransaction } = useAITransaction()
+
   const addMessage = (msg: Omit<Message, "id">) => {
     const id = `${msg.role}-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`
     setMessages((prev) => [...prev, { ...msg, id }])
@@ -491,7 +491,7 @@ export function useAIChat({
     if (loading) return
     setPendingDraft({})
     setGuidedStep("name")
-    addMessage({ role: "assistant", content: `Sure! Let's log a transaction. 📝\n\nWhat did you spend on (or receive)? *(e.g. Groceries, Netflix, Salary)*` })
+    addMessage({ role: "assistant", content: `Sure! Let's log a transaction. 📝\n\nWhat did you spend on (or receive)? *(e.g. Groceries, Netflix, Salary, or say it naturally like "MXPlayer pe kiye the")*` })
   }
 
   const cancelGuidedFlow = () => {
@@ -530,13 +530,10 @@ export function useAIChat({
       // BULK FLOW
       // ════════════════════════════════════════════════════════════════════
       if (bulkState) {
-
-        // Step 1 — Confirm adding new (unique) transactions
         if (bulkState.step === "preview") {
           if (isYes) {
             if (bulkState.unique.length > 0) {
               const { added, failed } = await addDrafts(bulkState.unique, onAddTransaction)
-
               const parts: string[] = []
               if (added.length > 0) {
                 parts.push(
@@ -544,12 +541,8 @@ export function useAIChat({
                   added.map((d) => `  • **${d.transaction}** — ₹${(d.amount as number).toLocaleString("en-IN")} (${d.date})`).join("\n")
                 )
               }
-              if (failed.length > 0) {
-                parts.push(`⚠️ Failed to add: ${failed.map((n) => `**${n}**`).join(", ")}`)
-              }
-
+              if (failed.length > 0) parts.push(`⚠️ Failed to add: ${failed.map((n) => `**${n}**`).join(", ")}`)
               if (bulkState.duplicates.length > 0) {
-                // Move to dup-ask step
                 setBulkState({ ...bulkState, step: "dup-ask" })
                 parts.push(buildDupAskCard(bulkState.duplicates))
               } else {
@@ -557,27 +550,20 @@ export function useAIChat({
                 parts.push("All done! Anything else?")
               }
               addMessage({ role: "assistant", content: parts.join("\n\n") })
-
             } else {
-              // unique is empty — only duplicates exist, go straight to dup-ask
               setBulkState({ ...bulkState, step: "dup-ask" })
               addMessage({ role: "assistant", content: buildDupAskCard(bulkState.duplicates) })
             }
-
           } else if (isNo) {
             setBulkState(null)
             addMessage({ role: "assistant", content: "Import cancelled. Let me know if you want to try again!" })
-
           } else {
-            // Unclear — re-show preview
             addMessage({ role: "assistant", content: `Please reply **yes** to confirm or **no** to cancel.\n\n${buildBulkPreviewCard(bulkState.unique, bulkState.duplicates)}` })
           }
-
           setLoading(false)
           return
         }
 
-        // Step 2 — Ask about duplicates
         if (bulkState.step === "dup-ask") {
           if (isYes) {
             const { added, failed } = await addDrafts(bulkState.duplicates, onAddTransaction)
@@ -589,45 +575,85 @@ export function useAIChat({
                 added.map((d) => `  • **${d.transaction}** — ₹${(d.amount as number).toLocaleString("en-IN")} (${d.date})`).join("\n")
               )
             }
-            if (failed.length > 0) {
-              parts.push(`⚠️ Failed: ${failed.map((n) => `**${n}**`).join(", ")}`)
-            }
+            if (failed.length > 0) parts.push(`⚠️ Failed: ${failed.map((n) => `**${n}**`).join(", ")}`)
             addMessage({ role: "assistant", content: parts.join("\n\n") + "\n\nAll done! Anything else?" })
-
           } else if (isNo) {
             setBulkState(null)
             addMessage({ role: "assistant", content: "Got it — duplicates skipped. All done! Anything else?" })
-
           } else {
             addMessage({ role: "assistant", content: "Please reply **yes** to add the duplicates or **no** to skip them." })
           }
-
           setLoading(false)
           return
         }
       }
 
       // ════════════════════════════════════════════════════════════════════
-      // GUIDED FLOW
+      // GUIDED FLOW  — name step uses GPT-4o-mini, rest unchanged
       // ════════════════════════════════════════════════════════════════════
       if (guidedStep !== "idle" && guidedStep !== "done") {
         switch (guidedStep) {
+
+          // ── NAME STEP: GPT-4o-mini intelligently parses the raw input ───
           case "name": {
-            const name     = extractEntityName(content.trim())
-            const category = inferCategory(name)
-            const type     = category === "Income" ? "Credit" : "Debit"
+            const aiResult = await parseTransaction(content.trim())
+
+            let name:     string
+            let category: string
+            let type:     string
+            let amount:   number | undefined
+            let method:   string | undefined
+            let date:     string
+
+            if (aiResult && aiResult.confidence > 0.4) {
+              name     = aiResult.transaction
+              category = VALID_CATEGORIES.includes(aiResult.category) ? aiResult.category : inferCategory(aiResult.transaction)
+              type     = aiResult.type ?? (category === "Income" ? "Credit" : "Debit")
+              date     = aiResult.date ?? format(new Date(), "yyyy-MM-dd")
+              amount   = aiResult.amount ?? undefined
+              method   = (aiResult.method && VALID_METHODS.includes(aiResult.method)) ? aiResult.method : undefined
+            } else {
+              // Fallback: local regex extraction
+              name     = extractEntityName(content.trim())
+              category = inferCategory(name)
+              type     = category === "Income" ? "Credit" : "Debit"
+              date     = format(new Date(), "yyyy-MM-dd")
+              amount   = undefined
+              method   = undefined
+            }
+
             const newDraft: Partial<TransactionDraft> = {
-              transaction: name, category, type,
-              date: format(new Date(), "yyyy-MM-dd"), status: "Completed",
+              transaction: name,
+              category,
+              type,
+              date,
+              status: "Completed",
+              ...(amount !== undefined ? { amount } : {}),
+              ...(method            ? { method } : {}),
             }
             setPendingDraft(newDraft)
-            setGuidedStep("amount")
+
             const inferMsg = category !== "Other"
               ? `\n\n*(Auto-detected: **${category}** · **${type}** — tell me if that's wrong)*`
               : ""
-            addMessage({ role: "assistant", content: `Got it — **${name}**.${inferMsg}\n\nHow much? *(just the number, e.g. 500)*` })
+
+            // Smart step-skip: if AI already got amount + method → go straight to confirm
+            if (amount !== undefined && method) {
+              setGuidedStep("confirm")
+              addMessage({ role: "assistant", content: `Got it — **${name}** for **₹${amount.toLocaleString("en-IN")}** via **${method}**.${inferMsg}\n\n${buildConfirmCard(newDraft)}` })
+            } else if (amount !== undefined) {
+              setGuidedStep("method")
+              addMessage({
+                role: "assistant",
+                content: `Got it — **${name}** for **₹${amount.toLocaleString("en-IN")}**.${inferMsg}\n\nHow did you pay / receive?\n- Cash\n- UPI\n- Credit Card\n- Debit Card\n- Bank Transfer\n- Net Banking`,
+              })
+            } else {
+              setGuidedStep("amount")
+              addMessage({ role: "assistant", content: `Got it — **${name}**.${inferMsg}\n\nHow much? *(just the number, e.g. 500)*` })
+            }
             break
           }
+
           case "amount": {
             const amount = parseFloat(content.replace(/[₹,\s]/g, "").replace(/rs\.?|inr|rupees?/gi, ""))
             if (isNaN(amount) || amount <= 0) {
@@ -645,6 +671,7 @@ export function useAIChat({
             }
             break
           }
+
           case "category": {
             const cat          = guidedCategoryFromReply(content)
             const inferredType = cat === "Income" ? "Credit" : "Debit"
@@ -654,6 +681,7 @@ export function useAIChat({
             addMessage({ role: "assistant", content: `Category: **${cat}** · Type: **${inferredType}**.\n\nHow did you pay / receive?\n- Cash\n- UPI\n- Credit Card\n- Debit Card\n- Bank Transfer\n- Net Banking` })
             break
           }
+
           case "method": {
             const method     = guidedMethodFromReply(content)
             const finalDraft = { ...pendingDraft, method } as TransactionDraft
@@ -662,6 +690,7 @@ export function useAIChat({
             addMessage({ role: "assistant", content: buildConfirmCard(finalDraft) })
             break
           }
+
           case "confirm": {
             const correction = !isYes && !isNo ? detectCorrection(content) : null
             if (correction) {
@@ -708,10 +737,9 @@ export function useAIChat({
       }
 
       // ════════════════════════════════════════════════════════════════════
-      // FREE-TEXT FLOW
+      // FREE-TEXT FLOW  (Groq / Llama 3.1)
       // ════════════════════════════════════════════════════════════════════
 
-      // CASE 0: Bulk import — show preview first, never add immediately
       const bulkDrafts = detectBulkImport(content)
       if (bulkDrafts) {
         const unique:     Partial<TransactionDraft>[] = []
@@ -726,7 +754,6 @@ export function useAIChat({
         return
       }
 
-      // CASE 1: Full draft pending — yes/no/correction
       if (pendingDraft && (pendingDraft as TransactionDraft).method) {
         const correction = !isYes && !isNo ? detectCorrection(content) : null
         if (correction) {
@@ -772,7 +799,6 @@ export function useAIChat({
         }
       }
 
-      // CASE 2: Partial draft — fill missing fields
       if (pendingDraft && !(pendingDraft as TransactionDraft).method) {
         const updated = fillDraftFromReply(content, pendingDraft)
         const missing = getMissingFields(updated)
@@ -782,7 +808,6 @@ export function useAIChat({
         return
       }
 
-      // CASE 3: Receipt scan single message → confirm card
       const receiptDraft = detectReceiptTransaction(content)
       if (receiptDraft) {
         setPendingDraft(receiptDraft)
@@ -791,7 +816,6 @@ export function useAIChat({
         return
       }
 
-      // CASE 4: Detect transaction intent in free text
       const detected = detectTransactionIntent(content)
       if (detected) {
         const missing = getMissingFields(detected)
@@ -801,7 +825,7 @@ export function useAIChat({
         return
       }
 
-      // CASE 5: General question → Groq
+      // General question → Groq (Llama 3.1 — fast, free)
       const text = await callGroq(apiKey, buildSystemPrompt(transactions, budgets), [...messages, userMsg])
       addMessage({ role: "assistant", content: text })
 

@@ -304,7 +304,10 @@ export function ChatInput({ onSend, loading, guidedStep, onStartGuided, onCancel
                 <button
                   key={label}
                   onClick={() => handleMenuAction(action)}
-                  className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-xl hover:bg-white/[0.06] transition-colors text-left cursor-pointer group"
+                  className={[
+                    "w-full flex items-center gap-2.5 px-2.5 py-2 rounded-xl hover:bg-white/[0.06] transition-colors text-left cursor-pointer group",
+                    action === "receipt" ? "md:hidden" : "",
+                  ].join(" ")}
                 >
                   <div className="size-[28px] rounded-lg bg-white/[0.06] border border-white/[0.08] flex items-center justify-center flex-shrink-0 group-hover:bg-white/[0.1] transition-colors">
                     <Icon size={13} className="text-white/50 group-hover:text-white/80 transition-colors" />
