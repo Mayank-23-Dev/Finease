@@ -34,29 +34,58 @@ export function FinancialPanel({
   const [connected, setConnected] = React.useState(false)
   const [checkingGmail, setCheckingGmail] = React.useState(true)
 
-  // FIX: Check Supabase on load to see if Gmail token exists for this user
   React.useEffect(() => {
     async function checkGmailToken() {
       if (!user) return
-      const { data } = await supabase
-        .from("gmail_tokens")
-        .select("firebase_uid")
-        .eq("firebase_uid", user.uid)
-        .single()
-      setConnected(!!data)
-      setCheckingGmail(false)
+      setCheckingGmail(true)
+
+      try {
+        const { data, error } = await supabase
+          .from("gmail_tokens")
+          .select("firebase_uid")
+          .eq("firebase_uid", user.uid)
+          .maybeSingle() // ✅ won't throw error if no row found
+
+        if (error) {
+          console.error("Gmail token check failed:", error)
+          setConnected(false)
+          return
+        }
+
+        // ✅ Check both DB row AND URL param (just came back from OAuth)
+        const params = new URLSearchParams(window.location.search)
+        setConnected(!!data || params.get("gmail") === "connected")
+      } finally {
+        setCheckingGmail(false)
+      }
     }
+
     checkGmailToken()
   }, [user])
-
-  // Also set connected if just came back from OAuth
-  React.useEffect(() => {
-    if (gmailStatus === "connected") setConnected(true)
-  }, [gmailStatus])
 
   const handleConnectGmail = () => {
     if (!user) return
     window.location.href = `${BACKEND_URL}/auth/gmail?uid=${user.uid}`
+  }
+
+  const handleDisconnectGmail = async () => {
+    if (!user) return
+    setCheckingGmail(true)
+    try {
+      const { error } = await supabase
+        .from("gmail_tokens")
+        .delete()
+        .eq("firebase_uid", user.uid)
+
+      if (error) {
+        console.error("Gmail disconnect failed:", error)
+        return
+      }
+
+      setConnected(false)
+    } finally {
+      setCheckingGmail(false)
+    }
   }
 
   if (profileLoading) {
@@ -102,9 +131,18 @@ export function FinancialPanel({
           {checkingGmail ? (
             <div className="size-4 rounded-full border-2 border-white/10 border-t-white/40 animate-spin" />
           ) : connected ? (
-            <div className="flex items-center gap-2 text-green-400 text-sm font-medium">
-              <CheckCircle2 className="size-4" />
-              Connected
+            <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2 text-green-400 text-sm font-medium">
+                <CheckCircle2 className="size-4" />
+                Connected
+              </div>
+              <Button
+                onClick={handleDisconnectGmail}
+                size="sm"
+                className="h-8 px-3 bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/20 cursor-pointer text-xs"
+              >
+                Disconnect
+              </Button>
             </div>
           ) : (
             <div className="flex flex-col items-end gap-1">

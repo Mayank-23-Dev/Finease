@@ -1,3 +1,71 @@
-node_modules    
+# Dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# Environment files
 .env
-service-account.json
+.env.*
+!.env.example
+
+# Build files
+dist/
+build/
+.next/
+out/
+
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE / Editor
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+
+# Firebase
+.firebase/
+firebase-debug.log
+
+# Supabase
+.supabase/
+
+# TypeScript
+*.tsbuildinfo
+
+# Cache
+.cache/
+.parcel-cache/
+.eslintcache
+
+# Coverage
+coverage/
+
+# Temporary files
+tmp/
+temp/
+
+# Local Netlify/Vercel
+.vercel/
+.netlify/
+
+# Misc
+*.local
+
+
+finease-backend/node_modules/
+finease-backend/dist/
+finease-backend/.env

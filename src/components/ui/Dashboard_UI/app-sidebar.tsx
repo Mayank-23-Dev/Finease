@@ -2,7 +2,7 @@
 import * as React from "react"
 import {
   IconChartPie, IconDashboard, IconWallet,
-  IconReport, IconSettings, IconRobot,
+  IconReport, IconSettings, IconRobot, IconRepeat, IconPigMoney, IconBell
 } from "@tabler/icons-react"
 import { Link }          from "react-router-dom"
 import { NavMain }       from "@/components/ui/Dashboard_UI/nav-main"
@@ -16,7 +16,7 @@ import {
 import { useAuth }        from "@/components/hooks/use-auth"
 import { getUserProfile } from "@/firebase/user"
 import { hasCustomAvatar, getAvatarPublicUrl } from "@/lib/avatar"
-import { avatarEvents }   from "@/lib/avatarEvents"  // ← new
+import { avatarEvents }   from "@/lib/avatarEvents"
 
 // ── Hook: resolves avatar with priority + listens for live updates ─────────────
 function useResolvedAvatar() {
@@ -29,32 +29,26 @@ function useResolvedAvatar() {
 
   const [avatar, setAvatar] = React.useState<string>(fallback)
 
-  // Core fetch function — runs on mount AND whenever avatarEvents fires
   const fetchAvatar = React.useCallback(async () => {
     if (!user) return
     try {
-      // 1. Supabase DB (profile_pic column) — fastest source of truth
       const profile = await getUserProfile()
       if (profile?.profile_pic) {
-        // Add cache-bust so browser doesn't show stale image after re-upload
         setAvatar(`${profile.profile_pic}?t=${Date.now()}`)
         return
       }
 
-      // 2. Supabase Storage direct check
       const hasOwn = await hasCustomAvatar(user.uid)
       if (hasOwn) {
         setAvatar(getAvatarPublicUrl(user.uid))
         return
       }
 
-      // 3. Firebase / Google
       if (user.photoURL) {
         setAvatar(user.photoURL)
         return
       }
 
-      // 4. Generated initials
       setAvatar(
         `https://ui-avatars.com/api/?name=${encodeURIComponent(
           user.displayName || user.email || "U"
@@ -65,12 +59,10 @@ function useResolvedAvatar() {
     }
   }, [user?.uid, user?.photoURL])
 
-  // Run on mount / user change
   React.useEffect(() => {
     fetchAvatar()
   }, [fetchAvatar])
 
-  // Re-run instantly when Settings finishes an upload — no reload needed
   React.useEffect(() => {
     return avatarEvents.on(fetchAvatar)
   }, [fetchAvatar])
@@ -94,7 +86,10 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       { title: "Transaction",  url: "/dashboard/transactions", icon: IconWallet    },
       { title: "Budget",       url: "/dashboard/budget",       icon: IconChartPie  },
       { title: "Reports",      url: "/dashboard/reports",      icon: IconReport    },
+      { title: "FinVault",     url: "/dashboard/finvault",     icon: IconPigMoney  }, // ← was Stocks
+      { title: "AutoFlow",     url: "/dashboard/autopay",      icon: IconRepeat    },
       { title: "AI Assistant", url: "/dashboard/ai-assistant", icon: IconRobot     },
+      // { title:"Notifications", url: "/dashboard/notifications", icon: IconBell },
     ],
     navSecondary: [
       { title: "Settings", url: "/dashboard/settings", icon: IconSettings },

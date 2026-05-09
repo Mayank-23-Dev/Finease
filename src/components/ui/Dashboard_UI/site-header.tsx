@@ -3,24 +3,31 @@
 import { useLocation } from "react-router-dom"
 import { Separator } from "@/components/ui/Dashboard_UI/separator"
 import { SidebarTrigger } from "@/components/ui/Dashboard_UI/sidebar"
+import { NotificationBell } from "@/components/ui/Notifications_UI/notification-bell"
+import { useAuth } from "@/components/hooks/use-auth"
 
 export function SiteHeader() {
   const location = useLocation()
-
+  const { user } = useAuth()
   const path = location.pathname
 
-  let title = "Dashboard"
+  const routes: Record<string, string> = {
+    "/dashboard/settings":     "Settings",
+    "/dashboard/transactions":  "Transaction",
+    "/dashboard/budget":       "Budget",
+    "/dashboard/reports":      "Reports",
+    "/dashboard/finvault":     "FinVault",
+    "/dashboard/autopay":      "AutoFlow",
+    "/dashboard/ai-assistant": "AI Assistant",
+    "/dashboard/notifications":"Notifications",
+  }
 
-  if (path.includes("/dashboard/settings")) {
-    title = "Settings"
-  } else if (path.includes("/dashboard/transaction")) {
-    title = "Transaction"
-  } else if (path.includes("/dashboard/budget")) {
-    title = "Budget"
-  } else if (path.includes("/dashboard/reports")) {
-    title = "Reports"
-  } else if (path.includes("/dashboard/ai")) {
-    title = "AI Assistant"
+  let title = "Dashboard"
+  for (const route in routes) {
+    if (path.includes(route)) {
+      title = routes[route]
+      break
+    }
   }
 
   return (
@@ -36,7 +43,9 @@ export function SiteHeader() {
 
         <h1 className="text-base font-medium">{title}</h1>
 
-        <div className="ml-auto flex items-center gap-2"></div>
+        <div className="ml-auto flex items-center gap-2">
+          <NotificationBell firebase_uid={user?.uid ?? ''} />
+        </div>
 
       </div>
     </header>

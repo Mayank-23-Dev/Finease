@@ -1,15 +1,15 @@
 // src/components/Pages/BudgetPage.tsx
 "use client"
 
-import { useBudgets }      from "@/components/hooks/use-budgets"
-import { BudgetOverview }  from "@/components/ui/Budget_UI/budget-overview"
-import { BudgetList }      from "@/components/ui/Budget_UI/budget-list"
+import { useBudgets } from "@/components/hooks/use-budgets"
+import { BudgetOverview } from "@/components/ui/Budget_UI/budget-overview"
+import { BudgetList } from "@/components/ui/Budget_UI/budget-list"
 import { AddBudgetDialog } from "@/components/ui/Budget_UI/add-budget-dialog"
-import { MonthPicker }     from "@/components/ui/Reports_UI/month-picker"
+import { MonthPicker } from "@/components/ui/Reports_UI/month-picker"
 
 export default function BudgetPage() {
-  const {
-    budgets, loading,
+  const {budgets, totalCap, setMonthlyTotalCap} = useBudgets()
+  const { loading,
     addBudget, updateBudget, deleteBudget,
     selectedMonth, setSelectedMonth,
   } = useBudgets()
@@ -41,7 +41,12 @@ export default function BudgetPage() {
           </div>
         ) : (
           <>
-            <BudgetOverview budgets={budgets} />
+
+            <BudgetOverview
+              budgets={budgets}
+              totalCap={totalCap}
+              onSetTotalCap={setMonthlyTotalCap}
+            />
             <BudgetList
               budgets={budgets}
               onEdit={updateBudget}

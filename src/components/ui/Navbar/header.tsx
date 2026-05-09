@@ -9,7 +9,7 @@ import { User } from "lucide-react";
 
 export const navLinks = [
   { label: "Features", href: "#features" },
-  { label: "Testimonials", href: "#testimonials" },
+  // { label: "Testimonials", href: "#testimonials" },
   { label: "FAQs", href: "#FAQS" },
   { label: "About Us", href: "#about" },
 ];

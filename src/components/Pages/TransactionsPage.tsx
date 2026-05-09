@@ -9,7 +9,7 @@ import { AddTransactionDialog } from "@/components/ui/Transaction_UI/add-transac
 import { useTransactions, type Transaction } from "@/components/hooks/use-transactions"
 import { useBudgets } from "@/components/hooks/use-budgets"
 
-type TransactionInput  = Omit<Transaction, "id" | "firebase_uid" | "created_at">
+type TransactionInput = Omit<Transaction, "id" | "firebase_uid" | "created_at">
 type TransactionUpdate = Omit<Transaction, "id" | "firebase_uid" | "created_at">
 
 export default function TransactionsPage() {
@@ -28,11 +28,11 @@ export default function TransactionsPage() {
   const filtered = React.useMemo(() => {
     const passesFilters = (t: Transaction) => {
       if (filters.category && t.category !== filters.category) return false
-      if (filters.type     && t.type     !== filters.type)     return false
-      if (filters.status   && t.status   !== filters.status)   return false
-      if (filters.method   && t.method   !== filters.method)   return false
-      if (filters.dateFrom && t.date < filters.dateFrom)       return false
-      if (filters.dateTo   && t.date > filters.dateTo)         return false
+      if (filters.type && t.type !== filters.type) return false
+      if (filters.status && t.status !== filters.status) return false
+      if (filters.method && t.method !== filters.method) return false
+      if (filters.dateFrom && t.date < filters.dateFrom) return false
+      if (filters.dateTo && t.date > filters.dateTo) return false
       return true
     }
 
@@ -43,10 +43,10 @@ export default function TransactionsPage() {
       .map((t) => {
         const name = t.transaction.toLowerCase()
         let score = 0
-        if (name === query)                                         score = 100
-        else if (name.startsWith(query))                            score = 80
+        if (name === query) score = 100
+        else if (name.startsWith(query)) score = 80
         else if (name.split(" ").some((w) => w.startsWith(query))) score = 60
-        else if (name.includes(query))                              score = 40
+        else if (name.includes(query)) score = 40
         return { t, score }
       })
       .filter(({ score, t }) => score > 0 && passesFilters(t))

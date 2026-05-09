@@ -50,7 +50,7 @@ const footerLinks: FooterSection[] = [
         links: [
             {
                 title: "Facebook",
-                href: "#",
+                href: "/social",
                 icon: (
                     <FacebookIcon
                     />
@@ -58,7 +58,7 @@ const footerLinks: FooterSection[] = [
             },
             {
                 title: "Instagram",
-                href: "#",
+                href: "/soon",
                 icon: (
                     <InstagramIcon
                     />
@@ -66,7 +66,7 @@ const footerLinks: FooterSection[] = [
             },
             {
                 title: "Youtube",
-                href: "#",
+                href: "/soon",
                 icon: (
                     <YoutubeIcon
                     />
@@ -74,7 +74,7 @@ const footerLinks: FooterSection[] = [
             },
             {
                 title: "LinkedIn",
-                href: "#",
+                href: "/soon",
                 icon: (
                     <LinkedinIcon
                     />

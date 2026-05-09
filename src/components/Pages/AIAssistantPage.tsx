@@ -2,24 +2,24 @@
 "use client"
 
 import { useEffect, useRef } from "react"
-import { useLocation }       from "react-router-dom"
-import { ChatWindow }        from "@/components/ui/AIAssistant_UI/chat-window"
-import { ChatInput }         from "@/components/ui/AIAssistant_UI/chat-input"
-import { SuggestedPrompts }  from "@/components/ui/AIAssistant_UI/suggested-prompts"
-import { useAIChat }         from "@/components/hooks/use-ai-chat"
-import { useChatStore }      from "@/components/hooks/use-chat-store"
-import { useTransactions }   from "@/components/hooks/use-transactions"
-import { useBudgets }        from "@/components/hooks/use-budgets"
-import { useAuth }           from "@/components/hooks/use-auth"
-import { Bot }               from "lucide-react"
+import { useLocation } from "react-router-dom"
+import { ChatWindow } from "@/components/ui/AIAssistant_UI/chat-window"
+import { ChatInput } from "@/components/ui/AIAssistant_UI/chat-input"
+import { SuggestedPrompts } from "@/components/ui/AIAssistant_UI/suggested-prompts"
+import { useAIChat } from "@/components/hooks/use-ai-chat"
+import { useChatStore } from "@/components/hooks/use-chat-store"
+import { useTransactions } from "@/components/hooks/use-transactions"
+import { useBudgets } from "@/components/hooks/use-budgets"
+import { useAuth } from "@/components/hooks/use-auth"
+import { Bot } from "lucide-react"
 
 export default function AIAssistantPage() {
   const { transactions, addTransaction } = useTransactions()
-  const { budgets }                      = useBudgets()
-  const { user }                         = useAuth()
-  const location                         = useLocation()
+  const { budgets } = useBudgets()
+  const { user } = useAuth()
+  const location = useLocation()
   // Ref guard so the seed fires exactly once even in React StrictMode double-invoke
-  const seedFiredRef                     = useRef(false)
+  const seedFiredRef = useRef(false)
 
   const {
     messages, setMessages,
@@ -33,7 +33,7 @@ export default function AIAssistantPage() {
     onAddTransaction: addTransaction,
     messages,
     setMessages,
-    pendingDraft:    pendingDraft as never,
+    pendingDraft: pendingDraft as never,
     setPendingDraft: setPendingDraft as never,
     guidedStep,
     setGuidedStep,
@@ -50,7 +50,7 @@ export default function AIAssistantPage() {
     sendMessage(seed)
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
-  const userAvatar   = user?.photoURL ?? null
+  const userAvatar = user?.photoURL ?? null
   const userInitials = (user?.displayName ?? user?.email ?? "U")
     .split(" ").map((w) => w[0]).slice(0, 2).join("").toUpperCase()
 
@@ -68,7 +68,7 @@ export default function AIAssistantPage() {
               <h1 className="text-sm font-medium text-white leading-tight">FinEase AI</h1>
               <div className="flex items-center gap-1.5 mt-0.5">
                 <span className="size-1.5 rounded-full bg-emerald-400" />
-                <span className="text-[11px] text-white/35">Online · Powered by Llama 3.1</span>
+                <span className="text-[11px] text-white/35">Online</span>
               </div>
             </div>
           </div>

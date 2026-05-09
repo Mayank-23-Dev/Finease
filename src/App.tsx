@@ -13,8 +13,24 @@ import TransactionsPage from "@/components/Pages/TransactionsPage";
 import BudgetPage from "@/components/Pages/BudgetPage";
 import ReportsPage from "@/components/Pages/ReportsPage";
 import AIAssistantPage from "@/components/Pages/AIAssistantPage";
-import Features from "@/components/ui/Footer_pages/feature";
+import Features from "@/components/ui/Footer_pages/features";
 import { ChatStoreProvider } from "@/components/hooks/use-chat-store"
+import RecurringPage from "@/components/Pages/RecurringPage"
+import SavingsPage from "@/components/Pages/SavingsPage";
+import { NotificationsPage } from "@/components/Pages/NotificationsPage";
+import { ComingSoon } from "@/components/ui/Page_Not_Found/coming_soon";
+import FAQsPage from "@/components/ui/Footer_pages/faqs";
+import Pricing from "@/components/ui/Footer_pages/pricing";
+import Testimonials from "@/components/ui/Footer_pages/Testimonials";
+import Integration from "@/components/ui/Footer_pages/Integration";
+import AboutUs from "@/components/ui/Footer_pages/about";
+import { PrivacyPolicy } from "@/components/ui/Footer_pages/Privacy";
+import TermsAndServices from "@/components/ui/Footer_pages/Terms";
+import Blog from "@/components/ui/Footer_pages/Blog";
+import Changelog from "@/components/ui/Footer_pages/changelog";
+import Brand from "@/components/ui/Footer_pages/brand";
+import Help from "@/components/ui/Footer_pages/help";
+
 
 export default function App() {
   return (
@@ -56,11 +72,25 @@ export default function App() {
             <Route path="reports"      element={<ReportsPage />}       />
             <Route path="ai-assistant" element={<AIAssistantPage />}   />
             <Route path="settings"     element={<SettingsPage />}      />
+            <Route path="autopay"      element={<RecurringPage />}     />
+            <Route path="finvault"     element={<SavingsPage />}       />
+            <Route path="notifications" element={<NotificationsPage />} />
           </Route>
 
-          <Route path="/features" element={<Features />} />
-          <Route path="*"         element={<NotFound />} />
-
+          <Route path="*"             element={<NotFound />} />
+          <Route path="/soon"         element={<ComingSoon />} />
+          <Route path="/features"     element={<Features />} />
+          <Route path="/pricing"      element={<Pricing />} />
+          <Route path="/testimonials" element={<Testimonials />} />
+          <Route path="/integration"  element={<Integration />} />
+          <Route path="/faqs"         element={<FAQsPage />} />
+          <Route path="/about"        element={<AboutUs />} />
+          <Route path="/privacy"      element={<PrivacyPolicy />} />
+          <Route path="/terms"        element={<TermsAndServices />} />
+          <Route path="/blog"         element={<Blog />} />
+          <Route path="/changelog"    element={<Changelog />} />
+          <Route path="/brand"        element={<Brand />} />
+          <Route path="/help"         element={<Help />} />
         </Routes>
       </div>
 

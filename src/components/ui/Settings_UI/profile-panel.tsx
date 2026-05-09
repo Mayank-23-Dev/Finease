@@ -1,10 +1,12 @@
+// src/components/ui/Settings_UI/profile-panel.tsx
 "use client"
 
 import * as React from "react"
-import { Camera, Sparkles, User, Calendar as CalendarIcon } from "lucide-react"
+import { Camera, Sparkles, User, Calendar as CalendarIcon, Download, CheckCircle } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, FieldRow, DateField, Toast, type StatusMsg } from "./settings-ui"
+import { useInstallPrompt } from "./settings-sidebar"
 
 interface ProfilePanelProps {
     displayName: string
@@ -25,7 +27,6 @@ interface ProfilePanelProps {
     setDisplayName: (v: string) => void
     setNameMsg: (v: StatusMsg) => void
     onSaveName: () => void
-    // DOB
     dob: string
     onDobChange: (v: string) => void
     onSaveProfile: () => void
@@ -43,6 +44,7 @@ export function ProfilePanel({
 }: ProfilePanelProps) {
 
     const [showToast, setShowToast] = React.useState(false)
+    const { canInstall, installed, isIOS, showButton, install } = useInstallPrompt()
 
     React.useEffect(() => {
         if (avatarMsg) {
@@ -53,7 +55,7 @@ export function ProfilePanel({
     }, [avatarMsg])
 
     return (
-        <div className="space-y-4">
+        <div className="space-y-4 w-full">
 
             {/* ── Avatar Card ── */}
             <Card className="relative overflow-hidden">
@@ -71,27 +73,24 @@ export function ProfilePanel({
                 </div>
 
                 {avatarMsg && (
-                    <div
-                        className={`
+                    <div className={`
                         absolute top-4 left-1/2 -translate-x-1/2 z-50
                         transition-all duration-300
                         ${showToast
-                                ? "animate-in fade-in slide-in-from-top-2"
-                                : "animate-out fade-out slide-out-to-top-2"}
-                    `}
-                    >
+                            ? "animate-in fade-in slide-in-from-top-2"
+                            : "animate-out fade-out slide-out-to-top-2"}
+                    `}>
                         <Toast msg={avatarMsg} />
                     </div>
                 )}
 
                 {/* Content */}
-                <div className="px-6 py-5 flex items-center gap-5">
+                <div className="px-4 sm:px-6 py-5 flex items-center gap-4 sm:gap-5">
 
                     {/* Avatar */}
                     <div className="relative group shrink-0">
-                        <div className="size-[78px] rounded-2xl overflow-hidden
-              ring-2 ring-white/[0.10] ring-offset-2 ring-offset-[#111]
-              shadow-md">
+                        <div className="size-[68px] sm:size-[78px] rounded-2xl overflow-hidden
+                            ring-2 ring-white/[0.10] ring-offset-2 ring-offset-[#111] shadow-md">
                             {avatarLoading ? (
                                 <div className="size-full bg-white/[0.06] animate-pulse flex items-center justify-center">
                                     <Camera className="size-5 text-white/20" />
@@ -111,7 +110,7 @@ export function ProfilePanel({
                             <button
                                 onClick={() => avatarInputRef.current?.click()}
                                 className="absolute inset-0 rounded-2xl bg-black/60 opacity-0 group-hover:opacity-100
-                transition flex items-center justify-center cursor-pointer"
+                                    transition flex items-center justify-center cursor-pointer"
                             >
                                 <Camera className="size-5 text-white" />
                             </button>
@@ -128,16 +127,16 @@ export function ProfilePanel({
 
                     {/* Info */}
                     <div className="flex flex-col justify-center min-w-0 flex-1 py-1">
-                        <p className="text-[20px] md:text-[22px] font-extrabold tracking-tight leading-snug truncate
-                        bg-gradient-to-r from-white via-white/95 to-white/70 bg-clip-text text-transparent
-                        drop-shadow-[0_2px_6px_rgba(0,0,0,0.6)]">
+                        <p className="text-[18px] sm:text-[22px] font-extrabold tracking-tight leading-snug truncate
+                            bg-gradient-to-r from-white via-white/95 to-white/70 bg-clip-text text-transparent
+                            drop-shadow-[0_2px_6px_rgba(0,0,0,0.6)]">
                             {displayName || "Your Name"}
                         </p>
 
-                        <div className="flex items-center gap-2 mt-1">
-                            <span className="text-[13px] text-white/60 truncate font-medium">{email}</span>
+                        <div className="flex items-center gap-2 mt-1 flex-wrap">
+                            <span className="text-[12px] sm:text-[13px] text-white/60 truncate font-medium">{email}</span>
                             <span className="size-1.5 rounded-full bg-emerald-400 shadow-[0_0_6px_rgba(16,185,129,0.6)]" />
-                            <span className="text-[12px] text-emerald-400 font-semibold">Verified</span>
+                            <span className="text-[11px] sm:text-[12px] text-emerald-400 font-semibold">Verified</span>
                         </div>
 
                         <div className="flex gap-2 mt-3 flex-wrap items-center">
@@ -147,10 +146,10 @@ export function ProfilePanel({
                                         variant="outline"
                                         size="sm"
                                         onClick={() => avatarInputRef.current?.click()}
-                                        className="h-8 px-4 rounded-lg text-[12.5px] font-medium
-                                        bg-white/[0.04] border border-white/[0.12]
-                                        text-white/80 hover:bg-white/[0.10] hover:border-white/[0.25]
-                                        hover:text-white active:scale-[0.97] transition-all duration-150 shadow-sm cursor-pointer"
+                                        className="h-8 px-3 sm:px-4 rounded-lg text-[12px] sm:text-[12.5px] font-medium
+                                            bg-white/[0.04] border border-white/[0.12]
+                                            text-white/80 hover:bg-white/[0.10] hover:border-white/[0.25]
+                                            hover:text-white active:scale-[0.97] transition-all duration-150 shadow-sm cursor-pointer"
                                     >
                                         Change photo
                                     </Button>
@@ -160,11 +159,11 @@ export function ProfilePanel({
                                             variant="outline"
                                             size="sm"
                                             onClick={onRemoveAvatar}
-                                            className="h-8 px-4 rounded-lg text-[12.5px] font-medium
-                                            bg-red-500/[0.08] border border-red-500/[0.25]
-                                            text-red-400 hover:bg-red-500/[0.18]
-                                            hover:border-red-500/[0.4] hover:text-red-300
-                                            active:scale-[0.97] transition-all duration-150 shadow-sm cursor-pointer"
+                                            className="h-8 px-3 sm:px-4 rounded-lg text-[12px] sm:text-[12.5px] font-medium
+                                                bg-red-500/[0.08] border border-red-500/[0.25]
+                                                text-red-400 hover:bg-red-500/[0.18]
+                                                hover:border-red-500/[0.4] hover:text-red-300
+                                                active:scale-[0.97] transition-all duration-150 shadow-sm cursor-pointer"
                                         >
                                             Remove
                                         </Button>
@@ -179,9 +178,9 @@ export function ProfilePanel({
                                         onClick={onSaveAvatar}
                                         disabled={avatarSaving}
                                         className="h-8 px-4 rounded-lg text-[12.5px] font-semibold
-                                        bg-white text-black shadow-sm hover:bg-white/90
-                                        active:scale-[0.97] transition-all duration-150
-                                        disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer"
+                                            bg-white text-black shadow-sm hover:bg-white/90
+                                            active:scale-[0.97] transition-all duration-150
+                                            disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer"
                                     >
                                         {avatarSaving ? "Uploading..." : "Save photo"}
                                     </Button>
@@ -192,10 +191,10 @@ export function ProfilePanel({
                                             size="sm"
                                             onClick={onCancelAvatar}
                                             className="h-8 px-4 rounded-lg text-[12.5px] font-medium
-                                            bg-white/[0.04] border border-white/[0.12]
-                                            text-white/70 hover:bg-white/[0.08]
-                                            hover:text-white active:scale-[0.97]
-                                            transition-all duration-150 cursor-pointer"
+                                                bg-white/[0.04] border border-white/[0.12]
+                                                text-white/70 hover:bg-white/[0.08]
+                                                hover:text-white active:scale-[0.97]
+                                                transition-all duration-150 cursor-pointer"
                                         >
                                             Cancel
                                         </Button>
@@ -210,6 +209,77 @@ export function ProfilePanel({
                     </div>
                 </div>
             </Card>
+
+            {/* ── Install App Card — mobile only (sidebar shows it on desktop) ── */}
+            <div className="lg:hidden">
+                {installed ? (
+                    <Card>
+                        <div className="px-5 py-4 flex items-center gap-3">
+                            <div className="p-2 rounded-xl bg-emerald-500/[0.10] shrink-0">
+                                <CheckCircle className="size-4 text-emerald-400" />
+                            </div>
+                            <div>
+                                <p className="text-[13px] font-semibold text-white/80">App Installed</p>
+                                <p className="text-[11px] text-white/35">FinEase is on your home screen</p>
+                            </div>
+                        </div>
+                    </Card>
+                ) : canInstall ? (
+                    /* Chrome/Android: native prompt */
+                    <Card>
+                        <button
+                            onClick={install}
+                            className="w-full px-5 py-4 flex items-center gap-3 cursor-pointer
+                                hover:bg-white/[0.03] transition-colors rounded-xl text-left"
+                        >
+                            <div className="p-2 rounded-xl bg-white/[0.06] shrink-0">
+                                <Download className="size-4 text-white/60" />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                                <p className="text-[13px] font-semibold text-white/80">Install FinEase</p>
+                                <p className="text-[11px] text-white/35">Add to home screen for quick access</p>
+                            </div>
+                            <div className="shrink-0 px-3 py-1.5 rounded-lg bg-white/[0.07] border border-white/[0.10]">
+                                <span className="text-[11px] font-semibold text-white/60">Install</span>
+                            </div>
+                        </button>
+                    </Card>
+                ) : isIOS ? (
+                    /* iOS Safari: manual steps */
+                    <Card>
+                        <div className="px-5 py-4 flex items-start gap-3">
+                            <div className="p-2 rounded-xl bg-white/[0.04] shrink-0">
+                                <Download className="size-4 text-white/30" />
+                            </div>
+                            <div>
+                                <p className="text-[13px] font-semibold text-white/60">Install FinEase</p>
+                                <p className="text-[11px] text-white/30 leading-snug mt-0.5">
+                                    Tap the Share button, then choose<br />"Add to Home Screen"
+                                </p>
+                            </div>
+                        </div>
+                    </Card>
+                ) : (
+                    /* Chrome: prompt not triggered yet — show hint */
+                    <Card>
+                        <button
+                            onClick={() => alert("To install: look for the install icon (⊕) in your browser address bar, or go to browser menu → Install FinEase")}
+                            className="w-full px-5 py-4 flex items-center gap-3 cursor-pointer
+                                hover:bg-white/[0.03] transition-colors rounded-xl text-left"
+                        >
+                            <div className="p-2 rounded-xl bg-white/[0.04] shrink-0">
+                                <Download className="size-4 text-white/30" />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                                <p className="text-[13px] font-semibold text-white/50">Install FinEase</p>
+                                <p className="text-[11px] text-white/25 leading-snug">
+                                    Tap ⊕ in your browser address bar
+                                </p>
+                            </div>
+                        </button>
+                    </Card>
+                )}
+            </div>
 
             {/* ── Name + Email + DOB Card ── */}
             <Card>
@@ -251,7 +321,7 @@ export function ProfilePanel({
                 </FieldRow>
             </Card>
 
-            {/* Save profile button — only shown once a DOB is set */}
+            {/* Save profile button */}
             {dob && (
                 <div className="flex items-center gap-3 pt-1">
                     <Button
